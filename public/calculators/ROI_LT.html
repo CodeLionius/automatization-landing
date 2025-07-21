@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automatizavimo ROI skaičiuoklė</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-weight: 600;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f0f7fa;
+            border-radius: 8px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #34495e;
+        }
+        input {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input:focus {
+            border-color: #3498db;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+        }
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .metric-card {
+            background-color: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .metric-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+        .metric-name {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-bottom: 8px;
+        }
+        .metric-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .metric-unit {
+            font-size: 14px;
+            color: #95a5a6;
+            margin-top: 5px;
+        }
+        .chart-container {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .chart-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+        .tab-container {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background-color: #f0f7fa;
+            border: none;
+            border-radius: 4px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.2s;
+        }
+        .tab.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .chart {
+            width: 100%;
+            height: 400px;
+        }
+        .tooltip {
+            position: absolute;
+            padding: 8px 12px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            border-radius: 4px;
+            pointer-events: none;
+            font-size: 14px;
+            z-index: 10;
+        }
+        .axis line, .axis path {
+            stroke: #ccc;
+        }
+        .axis text {
+            fill: #7f8c8d;
+            font-size: 12px;
+        }
+        .payback-line {
+            stroke: #e74c3c;
+            stroke-width: 2;
+            stroke-dasharray: 5, 5;
+        }
+        .breakeven-point {
+            fill: #e74c3c;
+        }
+        .positive-area {
+            fill: rgba(46, 204, 113, 0.2);
+        }
+        .negative-area {
+            fill: rgba(231, 76, 60, 0.2);
+        }
+        .sensitivity-bar-positive {
+            fill: #2ecc71;
+        }
+        .sensitivity-bar-negative {
+            fill: #e74c3c;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+        .footer a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            .controls {
+                grid-template-columns: 1fr;
+            }
+            .metrics {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        @media (max-width: 480px) {
+            .metrics {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="position: absolute; top: 30px; right: 40px; z-index: 1000;">
+        <button id="help-btn" style="font-size: 22px; border: none; background: #f1f1f1; border-radius: 50%; width: 38px; height: 38px; cursor: pointer; box-shadow: 0 2px 6px rgba(0,0,0,0.08);">?</button>
+    </div>
+    <div id="help-modal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.35); z-index:2000; align-items:center; justify-content:center;">
+        <div style="background:white; max-width:480px; margin:60px auto; border-radius:10px; box-shadow:0 8px 32px rgba(0,0,0,0.18); padding:32px 28px 24px 28px; position:relative;">
+            <button id="close-help" style="position:absolute; top:12px; right:16px; font-size:20px; background:none; border:none; cursor:pointer;">&times;</button>
+            <h2 style="margin-top:0;">Kaip veikia ši skaičiuoklė?</h2>
+            <h3 style="margin-bottom:4px;">Kintamųjų reikšmės:</h3>
+            <ul style="margin-top:0;">
+                <li><b>H_m</b> – Sutaupytos darbo valandos per mėnesį</li>
+                <li><b>C_h</b> – Valandinis įkainis (EUR)</li>
+                <li><b>S_m</b> – Kita mėnesinė nauda (EUR)</li>
+                <li><b>O_m</b> – Eksploatacinės išlaidos per mėnesį (EUR)</li>
+                <li><b>I_0</b> – Pradinė investicija (EUR)</li>
+                <li><b>n</b> – Vertinimo laikotarpis (mėnesiais)</li>
+                <li><b>l</b> – Apkrovos koeficientas</li>
+                <li><b>r</b> – Diskonto norma (metinė, %)</li>
+            </ul>
+            <h3 style="margin-bottom:4px;">Skaičiavimo logika:</h3>
+            <ul style="margin-top:0;">
+                <li><b>Grynoji nauda (B_m):</b> <i>B_m = H_m × C_h + S_m – O_m</i></li>
+                <li><b>ROI:</b> <i>ROI = ((B_m × n – I_0) / I_0) × 100</i></li>
+                <li><b>Atsipirkimo laikotarpis:</b> <i>I_0 / B_m</i></li>
+                <li><b>NPV:</b> Diskontuota grynosios naudos suma per n mėnesių atėmus investiciją</li>
+                <li><b>IRR:</b> Vidinė grąžos norma (mėnesinė, metinė)</li>
+            </ul>
+            <h3 style="margin-bottom:4px;">Grafikai:</h3>
+            <ul style="margin-top:0;">
+                <li><b>Kaupiamasis pinigų srautas:</b> Rodo, kaip investicija atsiperka laikui bėgant, įskaitant atsipirkimo tašką.</li>
+                <li><b>Jautrumo analizė:</b> Vizualizuoja, kaip ROI keičiasi, jei pagrindiniai parametrai padidėja arba sumažėja 20%.</li>
+                <li><b>ROI šiluminis žemėlapis:</b> Rodo, kaip ROI priklauso nuo sutaupytų valandų ir valandinio įkainio.</li>
+            </ul>
+        </div>
+    </div>
+    <div class="container">
+        <h1>Automatizavimo ROI skaičiuoklė</h1>
+        
+        <div id="validation-message" style="color:#e74c3c; font-weight:bold; text-align:center; margin-bottom:15px;"></div>
+        
+        <div class="controls">
+            <div class="control-group">
+                <label for="h_m">Sutaupytos darbo valandos per mėnesį (H_m)</label>
+                <input type="number" id="h_m" min="0" max="1000" value="320" step="10">
+            </div>
+            
+            <div class="control-group">
+                <label for="c_h">Specialisto valandinis įkainis (C_h)</label>
+                <input type="number" id="c_h" min="0" max="5000" value="850" step="50">
+            </div>
+            
+            <div class="control-group">
+                <label for="s_m">Kita nauda per mėnesį (S_m)</label>
+                <input type="number" id="s_m" min="0" max="100000" value="0">
+            </div>
+            
+            <div class="control-group">
+                <label for="o_m">Eksploatacinės išlaidos per mėnesį (O_m)</label>
+                <input type="number" id="o_m" min="0" max="100000" value="8000">
+            </div>
+            
+            <div class="control-group">
+                <label for="i_0">Vienkartinės investicijos (I_0)</label>
+                <input type="number" id="i_0" min="0" max="1000000" value="280000">
+            </div>
+            
+            <div class="control-group">
+                <label for="n">Vertinimo horizontas, mėn. (n)</label>
+                <input type="number" id="n" min="1" max="60" value="12" step="1">
+            </div>
+            
+            <div class="control-group">
+                <label for="l">Apkrovos koeficientas (L)</label>
+                <input type="number" id="l" min="0.1" max="1" value="0.8" step="0.05">
+            </div>
+            
+            <div class="control-group">
+                <label for="r">Metinė diskonto norma (r)</label>
+                <input type="number" id="r" min="0" max="0.5" value="0.12" step="0.01">
+            </div>
+        </div>
+        
+        <div class="metrics">
+            <div class="metric-card">
+                <div class="metric-name">FTE</div>
+                <div class="metric-value" id="metric-fte">0.00</div>
+                <div class="metric-unit">darbuotojų</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-name">Grynoji nauda (B_m)</div>
+                <div class="metric-value" id="metric-bm">0</div>
+                <div class="metric-unit">€/mėn</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-name">ROI</div>
+                <div class="metric-value" id="metric-roi">0</div>
+                <div class="metric-unit">%</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-name">Atsipirkimo laikotarpis</div>
+                <div class="metric-value" id="metric-payback">0</div>
+                <div class="metric-unit">mėnesių</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-name">NPV</div>
+                <div class="metric-value" id="metric-npv">0</div>
+                <div class="metric-unit">€</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-name">IRR</div>
+                <div class="metric-value" id="metric-irr">0</div>
+                <div class="metric-unit">% per metus</div>
+            </div>
+        </div>
+        
+        <div class="tab-container">
+            <button class="tab active" data-chart="cash-flow">Kaupiamasis pinigų srautas</button>
+            <button class="tab" data-chart="sensitivity">Jautrumo analizė</button>
+            <button class="tab" data-chart="heatmap">ROI šiluminis žemėlapis</button>
+        </div>
+        
+        <div class="chart-container">
+            <h3 class="chart-title" id="current-chart-title">Kaupiamasis pinigų srautas</h3>
+            <div id="chart" class="chart"></div>
+        </div>
+        
+        <div class="footer">
+            versija 1.0.3 | 2025
+        </div>
+    </div>
+    
+    <script>
+        // Pagrindiniai skaičiavimų kintamieji
+        let h_m, c_h, s_m, o_m, i_0, n, l, r;
+        let b_m, roi, payback, npv, irr, fte;
+        
+        // Dabartinis pasirinktas grafikas
+        let currentChart = 'cash-flow';
+        
+        // Objektas su grafikais
+        const charts = {
+            'cash-flow': renderCashFlowChart,
+            'sensitivity': renderSensitivityChart,
+            'heatmap': renderHeatmapChart
+        };
+        
+        // DOM elementai
+        const chartElement = document.getElementById('chart');
+        const inputs = document.querySelectorAll('input');
+        const tabs = document.querySelectorAll('.tab');
+        
+        // Įvykių apdorojimo funkcijos
+        inputs.forEach(input => {
+            input.addEventListener('input', updateCalculations);
+        });
+        
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                currentChart = tab.dataset.chart;
+                document.getElementById('current-chart-title').textContent = tab.textContent;
+                updateChart();
+            });
+        });
+        
+        // Inicializacija
+        updateCalculations();
+        
+        // Visų skaičiavimų atnaujinimo funkcija
+        function updateCalculations() {
+            // Gauname reikšmes iš įvesties laukų
+            h_m = parseFloat(document.getElementById('h_m').value);
+            c_h = parseFloat(document.getElementById('c_h').value);
+            s_m = parseFloat(document.getElementById('s_m').value);
+            o_m = parseFloat(document.getElementById('o_m').value);
+            i_0 = parseFloat(document.getElementById('i_0').value);
+            n = parseInt(document.getElementById('n').value);
+            l = parseFloat(document.getElementById('l').value);
+            r = parseFloat(document.getElementById('r').value);
+            
+            // Validacija
+            let validationMsg = '';
+            if (isNaN(h_m) || h_m < 0) validationMsg += 'Sutaupytos darbo valandos turi būti ≥ 0. ';
+            if (isNaN(c_h) || c_h < 0) validationMsg += 'Valandinis įkainis turi būti ≥ 0. ';
+            if (isNaN(s_m) || s_m < 0) validationMsg += 'Kita nauda turi būti ≥ 0. ';
+            if (isNaN(o_m) || o_m < 0) validationMsg += 'Eksploatacinės išlaidos turi būti ≥ 0. ';
+            if (isNaN(i_0) || i_0 < 0) validationMsg += 'Investicijos turi būti ≥ 0. ';
+            if (isNaN(n) || n < 1) validationMsg += 'Vertinimo horizontas turi būti bent 1 mėn. ';
+            if (isNaN(l) || l <= 0) validationMsg += 'Apkrovos koeficientas turi būti > 0. ';
+            if (isNaN(r) || r < 0) validationMsg += 'Diskonto norma turi būti ≥ 0. ';
+
+            // Jei yra klaidų, rodyti pranešimą ir nebeskaičiuoti
+            const validationDiv = document.getElementById('validation-message');
+            if (validationMsg) {
+                validationDiv.textContent = validationMsg;
+                document.getElementById('metric-fte').textContent = '-';
+                document.getElementById('metric-bm').textContent = '-';
+                document.getElementById('metric-roi').textContent = '-';
+                document.getElementById('metric-payback').textContent = '-';
+                document.getElementById('metric-npv').textContent = '-';
+                document.getElementById('metric-irr').textContent = '-';
+                d3.select('#chart').html('');
+                return;
+            } else {
+                validationDiv.textContent = '';
+            }
+            
+            // Išvestinių rodiklių skaičiavimas
+            fte = h_m / (168 * l);
+            b_m = h_m * c_h + s_m - o_m;
+            roi = ((b_m * n - i_0) / i_0) * 100;
+            payback = b_m > 0 ? i_0 / b_m : Infinity;
+            
+            // NPV skaičiavimas
+            let npvSum = 0;
+            for (let t = 1; t <= n; t++) {
+                npvSum += b_m / Math.pow(1 + r/12, t);
+            }
+            npv = npvSum - i_0;
+            
+            // IRR skaičiavimas (apytikslis metodas)
+            irr = calculateIRR(b_m, i_0, n);
+            
+            // Aiškūs pranešimai apie neatsiperkamumą
+            let notProfitable = b_m <= 0;
+            if (notProfitable) {
+                document.getElementById('metric-payback').textContent = 'Neatsiperka';
+                document.getElementById('metric-irr').textContent = '-';
+                document.getElementById('metric-roi').textContent = roi.toFixed(1);
+            } else {
+                document.getElementById('metric-payback').textContent = payback.toFixed(1);
+                document.getElementById('metric-irr').textContent = (irr * 100).toFixed(1);
+                document.getElementById('metric-roi').textContent = roi.toFixed(1);
+            }
+            document.getElementById('metric-fte').textContent = fte.toFixed(2);
+            document.getElementById('metric-bm').textContent = formatCurrency(b_m);
+            document.getElementById('metric-npv').textContent = formatCurrency(npv);
+            
+            // Atnaujiname grafiką tik jei duomenys logiški
+            if (!notProfitable) {
+                updateChart();
+            } else {
+                d3.select('#chart').html('');
+            }
+        }
+        
+        // Dabartinio grafiko atnaujinimo funkcija
+        function updateChart() {
+            // Išvalome ankstesnį grafiką
+            d3.select('#chart').html('');
+            
+            // Piešiame naują grafiką
+            charts[currentChart]();
+        }
+        
+        // Kaupiamojo pinigų srauto grafiko piešimo funkcija
+        function renderCashFlowChart() {
+            const margin = {top: 40, right: 60, bottom: 60, left: 80};
+            const width = chartElement.clientWidth - margin.left - margin.right;
+            const height = chartElement.clientHeight - margin.top - margin.bottom;
+            
+            // Kuriame SVG elementą
+            const svg = d3.select('#chart')
+                .append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom)
+                .append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            // Generuojame duomenis grafikui
+            const data = [];
+            let cumulativeCF = -i_0;
+            
+            for (let t = 0; t <= n; t++) {
+                data.push({
+                    month: t,
+                    cf: t === 0 ? -i_0 : b_m,
+                    cumulative: cumulativeCF
+                });
+                if (t > 0) cumulativeCF += b_m;
+            }
+            
+            // Randame atsipirkimo tašką (mėnesį, kai cumulative >= 0)
+            const breakEvenPoint = data.find(d => d.cumulative >= 0);
+            const breakEvenMonth = breakEvenPoint ? breakEvenPoint.month : null;
+            
+            // Nustatome mastelius
+            const x = d3.scaleLinear()
+                .domain([0, n])
+                .range([0, width]);
+            
+            const y = d3.scaleLinear()
+                .domain([d3.min(data, d => d.cumulative) * 1.1, 
+                         Math.max(0, d3.max(data, d => d.cumulative) * 1.1)])
+                .range([height, 0]);
+            
+            // Piešiame ašis
+            svg.append('g')
+                .attr('class', 'axis')
+                .attr('transform', `translate(0,${y(0)})`)
+                .call(d3.axisBottom(x)
+                    .ticks(Math.min(n, 12))
+                    .tickFormat(d => `${d} mėn`));
+            
+            svg.append('g')
+                .attr('class', 'axis')
+                .call(d3.axisLeft(y)
+                    .tickFormat(d => `${d3.format(',.0f')(d)} €`));
+            
+            // Ašių pavadinimai
+            svg.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('transform', `translate(${width/2},${height + 50})`) //+40
+                .text('Laikotarpis (mėnesiai)')
+                .style('font-size', '14px')
+                .style('fill', '#2c3e50');
+            
+            // Vertikalus ašies pavadinimas
+            svg.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('transform', `translate(20,${height/2})rotate(-90)`)
+                .text('Kaupiamasis pinigų srautas (€)')
+                .style('font-size', '14px')
+                .style('fill', '#2c3e50');
+            
+            // Sritis teigiamoms ir neigiamoms reikšmėms
+            const areaPositive = d3.area()
+                .x(d => x(d.month))
+                .y0(y(0))
+                .y1(d => d.cumulative >= 0 ? y(d.cumulative) : y(0));
+            
+            const areaNegative = d3.area()
+                .x(d => x(d.month))
+                .y0(y(0))
+                .y1(d => d.cumulative < 0 ? y(d.cumulative) : y(0));
+            
+            svg.append('path')
+                .datum(data)
+                .attr('class', 'positive-area')
+                .attr('d', areaPositive);
+            
+            svg.append('path')
+                .datum(data)
+                .attr('class', 'negative-area')
+                .attr('d', areaNegative);
+            
+            // Kaupiamojo pinigų srauto linija
+            const line = d3.line()
+                .x(d => x(d.month))
+                .y(d => y(d.cumulative))
+                .curve(d3.curveMonotoneX);
+            
+            svg.append('path')
+                .datum(data)
+                .attr('fill', 'none')
+                .attr('stroke', '#3498db')
+                .attr('stroke-width', 3)
+                .attr('d', line);
+            
+            // Horizontali linija y=0 lygyje
+            svg.append('line')
+                .attr('x1', 0)
+                .attr('y1', y(0))
+                .attr('x2', width)
+                .attr('y2', y(0))
+                .attr('stroke', '#95a5a6')
+                .attr('stroke-width', 1);
+            
+            // Taškai grafike
+            svg.selectAll('.dot')
+                .data(data)
+                .enter()
+                .append('circle')
+                .attr('class', 'dot')
+                .attr('cx', d => x(d.month))
+                .attr('cy', d => y(d.cumulative))
+                .attr('r', 4)
+                .attr('fill', '#3498db');
+            
+            // Jei yra atsipirkimo taškas, pažymime jį
+            if (breakEvenMonth) {
+                // Vertikali punktyrinė linija iki atsipirkimo taško
+                svg.append('line')
+                    .attr('class', 'payback-line')
+                    .attr('x1', x(breakEvenMonth))
+                    .attr('y1', y(0))
+                    .attr('x2', x(breakEvenMonth))
+                    .attr('y2', 0);
+                
+                // Specialus atsipirkimo taškas
+                svg.append('circle')
+                    .attr('class', 'breakeven-point')
+                    .attr('cx', x(breakEvenMonth))
+                    .attr('cy', y(0))
+                    .attr('r', 8);
+                
+                // Atsipirkimo taško žymė
+                svg.append('text')
+                    .attr('x', x(breakEvenMonth)) //+ 75
+                    .attr('y', y(0) + 40) //y(0)-15
+                    .attr('text-anchor', 'middle')
+                    .text(`Atsipirkimo taškas: ${breakEvenMonth} mėn.`) //text(`Atsipirkimo taškas: ${breakEvenMonth.toFixed(1)} mėn.`)
+                    .style('font-size', '12px')
+                    .style('font-weight', 'bold')
+                    .style('fill', '#e74c3c');
+            }
+            
+            // Iššokantis patarimas (tooltip)
+            const tooltip = d3.select("body")
+                .append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+            
+            // Pridedame įvykių apdorojimo funkcijas taškams
+            svg.selectAll('.dot')
+                .on('mouseover', function(event, d) {
+                    d3.select(this)
+                        .attr('r', 6)
+                        .attr('fill', '#2c3e50');
+                    
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    
+                    tooltip.html(`
+                        <strong>Mėnuo:</strong> ${d.month}<br>
+                        <strong>Laikotarpio PS:</strong> ${formatCurrency(d.cf)}<br>
+                        <strong>Kaupiamasis PS:</strong> ${formatCurrency(d.cumulative)}
+                    `)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on('mouseout', function() {
+                    d3.select(this)
+                        .attr('r', 4)
+                        .attr('fill', '#3498db');
+                    
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+        }
+        
+        // Jautrumo analizės grafiko piešimo funkcija
+        function renderSensitivityChart() {
+            const margin = {top: 40, right: 60, bottom: 60, left: 120};
+            const width = chartElement.clientWidth - margin.left - margin.right;
+            const height = chartElement.clientHeight - margin.top - margin.bottom;
+            
+            // Kuriame SVG elementą
+            const svg = d3.select('#chart')
+                .append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom)
+                .append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            // Skaičiuojame bazines reikšmes
+            const baseROI = roi;
+            
+            // Generuojame duomenis jautrumo analizei (±20%)
+            const data = [
+                { param: 'Sutaupytos valandos', 
+                  deltaPlus: ((h_m * c_h * 1.2 + s_m - o_m) * n - i_0) / i_0 * 100 - baseROI,
+                  deltaMinus: ((h_m * c_h * 0.8 + s_m - o_m) * n - i_0) / i_0 * 100 - baseROI },
+                
+                { param: 'Valandos kaina', 
+                  deltaPlus: ((h_m * (c_h * 1.2) + s_m - o_m) * n - i_0) / i_0 * 100 - baseROI,
+                  deltaMinus: ((h_m * (c_h * 0.8) + s_m - o_m) * n - i_0) / i_0 * 100 - baseROI },
+                
+                { param: 'Ekspl. išlaidos', 
+                  deltaPlus: ((h_m * c_h + s_m - (o_m * 1.2)) * n - i_0) / i_0 * 100 - baseROI,
+                  deltaMinus: ((h_m * c_h + s_m - (o_m * 0.8)) * n - i_0) / i_0 * 100 - baseROI },
+                
+                { param: 'Investicijos', 
+                  deltaPlus: ((h_m * c_h + s_m - o_m) * n - (i_0 * 1.2)) / (i_0 * 1.2) * 100 - baseROI,
+                  deltaMinus: ((h_m * c_h + s_m - o_m) * n - (i_0 * 0.8)) / (i_0 * 0.8) * 100 - baseROI },
+                
+                { param: 'Kita nauda', 
+                  deltaPlus: ((h_m * c_h + (s_m * 1.2) - o_m) * n - i_0) / i_0 * 100 - baseROI,
+                  deltaMinus: ((h_m * c_h + (s_m * 0.8) - o_m) * n - i_0) / i_0 * 100 - baseROI }
+            ];
+            
+            // Rūšiuojame pagal įtaką (nuo didžiausios iki mažiausios)
+            data.sort((a, b) => Math.abs(b.deltaPlus) + Math.abs(b.deltaMinus) - (Math.abs(a.deltaPlus) + Math.abs(a.deltaMinus)));
+            
+            // Nustatome mastelius
+            const y = d3.scaleBand()
+                .domain(data.map(d => d.param))
+                .range([0, height])
+                .padding(0.3);
+            
+            const maxDelta = d3.max(data, d => Math.max(Math.abs(d.deltaPlus), Math.abs(d.deltaMinus))) * 1.1;
+            
+            const x = d3.scaleLinear()
+                .domain([-maxDelta, maxDelta])
+                .range([0, width]);
+            
+            // Piešiame ašis
+            svg.append('g')
+                .attr('class', 'axis')
+                .attr('transform', `translate(0,${height})`)
+                .call(d3.axisBottom(x)
+                    .tickFormat(d => `${d3.format('+.1f')(d)}%`));
+            
+            svg.append('g')
+                .attr('class', 'axis')
+                .call(d3.axisLeft(y));
+            
+            // Vertikali linija ties 0
+            svg.append('line')
+                .attr('x1', x(0))
+                .attr('y1', 0)
+                .attr('x2', x(0))
+                .attr('y2', height)
+                .attr('stroke', '#95a5a6')
+                .attr('stroke-width', 1)
+                .style('stroke-dasharray', '3,3');
+            
+            // Piešiame teigiamus stulpelius (skirta deltaPlus)
+            svg.selectAll('.bar-plus')
+                .data(data)
+                .enter()
+                .append('rect')
+                .attr('class', 'sensitivity-bar-positive')
+                .attr('x', d => d.deltaPlus >= 0 ? x(0) : x(d.deltaPlus))
+                .attr('y', d => y(d.param))
+                .attr('width', d => Math.abs(x(d.deltaPlus) - x(0)))
+                .attr('height', y.bandwidth() / 2)
+                .attr('fill', d => d.deltaPlus >= 0 ? '#2ecc71' : '#e74c3c');
+            
+            // Piešiame neigiamus stulpelius (skirta deltaMinus)
+            svg.selectAll('.bar-minus')
+                .data(data)
+                .enter()
+                .append('rect')
+                .attr('class', 'sensitivity-bar-negative')
+                .attr('x', d => d.deltaMinus >= 0 ? x(0) : x(d.deltaMinus))
+                .attr('y', d => y(d.param) + y.bandwidth() / 2)
+                .attr('width', d => Math.abs(x(d.deltaMinus) - x(0)))
+                .attr('height', y.bandwidth() / 2)
+                .attr('fill', d => d.deltaMinus >= 0 ? '#2ecc71' : '#e74c3c');
+            
+            // Pridedame žymes
+            svg.selectAll('.label-plus')
+                .data(data)
+                .enter()
+                .append('text')
+                .attr('x', d => d.deltaPlus >= 0 ? x(d.deltaPlus) + 5 : x(d.deltaPlus) - 5)
+                .attr('y', d => y(d.param) + y.bandwidth() / 4)
+                .attr('dy', '0.35em')
+                .attr('text-anchor', d => d.deltaPlus >= 0 ? 'start' : 'end')
+                .text(d => `+20%: ${d3.format('+.1f')(d.deltaPlus)}%`)
+                .style('font-size', '12px')
+                .style('fill', '#34495e');
+            
+            svg.selectAll('.label-minus')
+                .data(data)
+                .enter()
+                .append('text')
+                .attr('x', d => d.deltaMinus >= 0 ? x(d.deltaMinus) + 5 : x(d.deltaMinus) - 5)
+                .attr('y', d => y(d.param) + y.bandwidth() * 3/4)
+                .attr('dy', '0.35em')
+                .attr('text-anchor', d => d.deltaMinus >= 0 ? 'start' : 'end')
+                .text(d => `-20%: ${d3.format('+.1f')(d.deltaMinus)}%`)
+                .style('font-size', '12px')
+                .style('fill', '#34495e');
+            
+            // Pridedame legendą
+            svg.append('text')
+                .attr('x', width / 2)
+                .attr('y', -10)
+                .attr('text-anchor', 'middle')
+                .text('Poveikis ROI, pakeitus parametrą ±20%')
+                .style('font-size', '14px')
+                .style('font-weight', 'bold')
+                .style('fill', '#2c3e50');
+            
+            // Pridedame spalvų paaiškinimą
+            svg.append('rect')
+                .attr('x', width - 200)
+                .attr('y', -30)
+                .attr('width', 12)
+                .attr('height', 12)
+                .attr('fill', '#2ecc71');
+            
+            svg.append('text')
+                .attr('x', width - 180)
+                .attr('y', -20)
+                .text('Teigiamas poveikis')
+                .style('font-size', '12px')
+                .style('fill', '#34495e');
+            
+            svg.append('rect')
+                .attr('x', width - 200)
+                .attr('y', -10)
+                .attr('width', 12)
+                .attr('height', 12)
+                .attr('fill', '#e74c3c');
+            
+            svg.append('text')
+                .attr('x', width - 180)
+                .attr('y', 0)
+                .text('Neigiamas poveikis')
+                .style('font-size', '12px')
+                .style('fill', '#34495e');
+        }
+        
+        // ROI šiluminio žemėlapio piešimo funkcija
+        function renderHeatmapChart() {
+            const margin = {top: 40, right: 120, bottom: 60, left: 80};
+            const width = chartElement.clientWidth - margin.left - margin.right;
+            const height = chartElement.clientHeight - margin.top - margin.bottom;
+            
+            // Kuriame SVG elementą
+            const svg = d3.select('#chart')
+                .append('svg')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom)
+                .append('g')
+                .attr('transform', `translate(${margin.left},${margin.top})`);
+            
+            // Nustatome ašių reikšmių diapazonus
+            const h_m_values = Array.from({length: 11}, (_, i) => Math.max(10, h_m - h_m * 0.5) + i * (h_m * 1.0 / 10));
+            const c_h_values = Array.from({length: 11}, (_, i) => Math.max(10, c_h - c_h * 0.5) + i * (c_h * 1.0 / 10));
+            
+            // Generuojame duomenis šiluminiam žemėlapiui
+            const data = [];
+            for (let i = 0; i < h_m_values.length; i++) {
+                for (let j = 0; j < c_h_values.length; j++) {
+                    const curr_h_m = h_m_values[i];
+                    const curr_c_h = c_h_values[j];
+                    const curr_b_m = curr_h_m * curr_c_h + s_m - o_m;
+                    const curr_roi = ((curr_b_m * n - i_0) / i_0) * 100;
+                    
+                    data.push({
+                        h_m: curr_h_m,
+                        c_h: curr_c_h,
+                        roi: curr_roi
+                    });
+                }
+            }
+            
+            // Nustatome mastelius
+            const x = d3.scaleBand()
+                .domain(h_m_values.map(String))
+                .range([0, width])
+                .padding(0.05);
+            
+            const y = d3.scaleBand()
+                .domain(c_h_values.map(String).reverse())
+                .range([0, height])
+                .padding(0.05);
+            
+            // Nustatome spalvų skalę
+            const roiExtent = d3.extent(data, d => d.roi);
+            const maxAbsROI = Math.max(Math.abs(roiExtent[0]), Math.abs(roiExtent[1]));
+            
+            const color = d3.scaleLinear()
+                .domain([-maxAbsROI, 0, maxAbsROI])
+                .range(['#e74c3c', '#ecf0f1', '#2ecc71']);
+            
+            // Piešiame šiluminio žemėlapio langelius
+            svg.selectAll('rect')
+                .data(data)
+                .enter()
+                .append('rect')
+                .attr('x', d => x(String(d.h_m)))
+                .attr('y', d => y(String(d.c_h)))
+                .attr('width', x.bandwidth())
+                .attr('height', y.bandwidth())
+                .attr('fill', d => color(d.roi))
+                .attr('stroke', '#fff')
+                .attr('stroke-width', 0.5);
+            
+            // Ašys
+            svg.append('g')
+                .attr('class', 'axis')
+                .attr('transform', `translate(0,${height})`)
+                .call(d3.axisBottom(x)
+                    .tickValues(x.domain().filter((_, i) => i % 2 === 0))
+                    .tickFormat(d => d3.format('.0f')(parseFloat(d))));
+            
+            svg.append('g')
+                .attr('class', 'axis')
+                .call(d3.axisLeft(y)
+                    .tickValues(y.domain().filter((_, i) => i % 2 === 0))
+                    .tickFormat(d => d3.format('.0f')(parseFloat(d))));
+            
+            // Ašių parašai
+            svg.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('transform', `translate(${width/2},${height + 40})`)
+                .text('Sutaupytos darbo valandos per mėnesį (H_m)')
+                .style('font-size', '14px')
+                .style('fill', '#2c3e50');
+            
+            svg.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('transform', `translate(-50,${height/2})rotate(-90)`) //-40
+                .text('Specialisto valandos kaina (C_h), €')
+                .style('font-size', '14px')
+                .style('fill', '#2c3e50');
+            
+            // Pridedame nulinio ROI liniją, jei yra duomenų su ROI < 0 ir ROI > 0
+            if (roiExtent[0] < 0 && roiExtent[1] > 0) {
+                // --- PRADŽIA: Atkurta originali nulinės ROI linijos logika ---
+                const zeroContour = [];
+                
+                // Tikriname kiekvieną gretimų langelių porą horizontaliai ir vertikaliai
+                for (let i = 0; i < h_m_values.length - 1; i++) {
+                    for (let j = 0; j < c_h_values.length - 1; j++) {
+                        const idx1 = i * c_h_values.length + j;
+                        const idx2 = (i + 1) * c_h_values.length + j;
+                        const idx3 = i * c_h_values.length + (j + 1);
+                        
+                        // Horizontalus patikrinimas (tarp stulpelių)
+                        if ((data[idx1].roi * data[idx2].roi <= 0) && (data[idx1].roi !== 0 || data[idx2].roi !== 0)) {
+                            const ratio = Math.abs(data[idx1].roi) / (Math.abs(data[idx1].roi) + Math.abs(data[idx2].roi));
+                            zeroContour.push({
+                                x1: x(String(data[idx1].h_m)) + x.bandwidth(),
+                                y1: y(String(data[idx1].c_h)) + y.bandwidth() * (1 - ratio),
+                                x2: x(String(data[idx2].h_m)),
+                                y2: y(String(data[idx2].c_h)) + y.bandwidth() * ratio
+                            });
+                        }
+                        
+                        // Vertikalus patikrinimas (tarp eilučių)
+                        if ((data[idx1].roi * data[idx3].roi <= 0) && (data[idx1].roi !== 0 || data[idx3].roi !== 0)) {
+                            const ratio = Math.abs(data[idx1].roi) / (Math.abs(data[idx1].roi) + Math.abs(data[idx3].roi));
+                            zeroContour.push({
+                                x1: x(String(data[idx1].h_m)) + x.bandwidth() * ratio,
+                                y1: y(String(data[idx1].c_h)) + y.bandwidth(),
+                                x2: x(String(data[idx3].h_m)) + x.bandwidth() * (1 - ratio),
+                                y2: y(String(data[idx3].c_h))
+                            });
+                        }
+                    }
+                }
+                
+                // Piešiame nulinio ROI linijų segmentus
+                svg.selectAll('.zero-line')
+                    .data(zeroContour)
+                    .enter()
+                    .append('line')
+                    .attr('class', 'zero-line')
+                    .attr('x1', d => d.x1)
+                    .attr('y1', d => d.y1)
+                    .attr('x2', d => d.x2)
+                    .attr('y2', d => d.y2)
+                    .attr('stroke', '#34495e')
+                    .attr('stroke-width', 2)
+                    .attr('stroke-dasharray', '5,5');
+                // --- PABAIGA: Atkurta originali nulinės ROI linijos logika ---
+                
+                // Pridedame nulinio ROI žymę
+                svg.append('text')
+                    .attr('x', width - 60)
+                    .attr('y', 20)
+                    .text('ROI = 0%')
+                    .style('font-size', '12px')
+                    .style('font-weight', 'bold')
+                    .style('fill', '#34495e');
+                
+                svg.append('line')
+                    .attr('x1', width - 100)
+                    .attr('y1', 20)
+                    .attr('x2', width - 70)
+                    .attr('y2', 20)
+                    .attr('stroke', '#34495e')
+                    .attr('stroke-width', 2)
+                    .attr('stroke-dasharray', '5,5');
+            }
+            
+            // Pridedame spalvų skalę
+            const legendWidth = 40;
+            const legendHeight = height;
+            
+            const legendScale = d3.scaleLinear()
+                .domain([maxAbsROI, 0, -maxAbsROI])
+                .range([0, legendHeight / 2, legendHeight]);
+            
+            const legendAxis = d3.axisRight(legendScale)
+                .tickValues([-maxAbsROI, -maxAbsROI/2, 0, maxAbsROI/2, maxAbsROI])
+                .tickFormat(d => `${d3.format('+.0f')(d)}%`);
+            
+            // Kuriame gradientą
+            const defs = svg.append('defs');
+            const gradient = defs.append('linearGradient')
+                .attr('id', 'legend-gradient')
+                .attr('x1', '0%')
+                .attr('y1', '0%')
+                .attr('x2', '0%')
+                .attr('y2', '100%');
+            
+            gradient.append('stop')
+                .attr('offset', '0%')
+                .attr('stop-color', '#2ecc71');
+            
+            gradient.append('stop')
+                .attr('offset', '50%')
+                .attr('stop-color', '#ecf0f1');
+            
+            gradient.append('stop')
+                .attr('offset', '100%')
+                .attr('stop-color', '#e74c3c');
+            
+            // Piešiame spalvų skalę
+            svg.append('rect')
+                .attr('x', width + 30)
+                .attr('y', 0)
+                .attr('width', legendWidth)
+                .attr('height', legendHeight)
+                .style('fill', 'url(#legend-gradient)');
+            
+            svg.append('g')
+                .attr('class', 'legend-axis')
+                .attr('transform', `translate(${width + 30 + legendWidth},0)`)
+                .call(legendAxis)
+                .selectAll('text')
+                .style('font-size', '10px');
+            
+            // Pavadinimas
+            svg.append('text')
+                .attr('x', width / 2)
+                .attr('y', -15)
+                .attr('text-anchor', 'middle')
+                //.text('ROI šiluminis žemėlapis (%)')
+                .style('font-size', '16px')
+                .style('font-weight', 'bold')
+                .style('fill', '#2c3e50');
+            
+            // Iššokantis patarimas (tooltip)
+            const tooltip = d3.select("body")
+                .append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+            
+            // Pridedame įvykių apdorojimo funkcijas langeliams
+            svg.selectAll('rect')
+                .on('mouseover', function(event, d) {
+                    const rect = d3.select(this);
+                    
+                    rect.attr('stroke', '#34495e')
+                        .attr('stroke-width', 2);
+                    
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    
+                    tooltip.html(`
+                        <strong>H_m:</strong> ${d3.format('.0f')(d.h_m)} val/mėn<br>
+                        <strong>C_h:</strong> ${d3.format('.0f')(d.c_h)} €/val<br>
+                        <strong>ROI:</strong> ${d3.format('+.1f')(d.roi)}%<br>
+                        <strong>Atsipirkimas:</strong> ${d.roi <= 0 ? '∞' : d3.format('.1f')(i_0 / (d.h_m * d.c_h + s_m - o_m))} mėn
+                    `)
+                        .style("left", (event.pageX + 10) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on('mouseout', function() {
+                    d3.select(this)
+                        .attr('stroke', '#fff')
+                        .attr('stroke-width', 0.5);
+                    
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+        }
+        
+        // Pagalbinės funkcijos
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('lt-LT', { 
+                style: 'decimal',
+                maximumFractionDigits: 0
+            }).format(Math.round(value));
+        }
+        
+        // Funkcija apytiksliam IRR apskaičiuoti
+        function calculateIRR(monthlyPayment, initialInvestment, months) {
+            if (monthlyPayment <= 0) return 0;
+            
+            // NPV funkcija nurodytai mėnesinei normai
+            function npv(monthlyRate) {
+                let sum = -initialInvestment;
+                for (let i = 1; i <= months; i++) {
+                    sum += monthlyPayment / Math.pow(1 + monthlyRate, i);
+                }
+                return sum;
+            }
+            
+            // Binarinė paieška mėnesinei IRR rasti
+            let low = 0;
+            let high = 1;
+            let guess = 0.05;
+            
+            // Jei dabartinė NPV reikšmė > 0, didiname guess iki high
+            if (npv(guess) > 0) {
+                while (npv(high) > 0) {
+                    high = high * 2;
+                }
+            } else {
+                // Jei dabartinė NPV reikšmė < 0, mažiname guess iki low
+                while (npv(low) < 0 && low > 0.0001) {
+                    low = low / 2;
+                }
+            }
+            
+            // Binarinė paieška
+            for (let i = 0; i < 100; i++) {
+                guess = (low + high) / 2;
+                let npvValue = npv(guess);
+                
+                if (Math.abs(npvValue) < 0.001) break;
+                
+                if (npvValue > 0) {
+                    low = guess;
+                } else {
+                    high = guess;
+                }
+            }
+            
+            // Konvertuojame mėnesinę normą į metinę
+            return Math.pow(1 + guess, 12) - 1;
+        }
+
+        document.getElementById('help-btn').onclick = function() {
+            document.getElementById('help-modal').style.display = 'flex';
+        };
+        document.getElementById('close-help').onclick = function() {
+            document.getElementById('help-modal').style.display = 'none';
+        };
+    </script>
+</body>
+</html>

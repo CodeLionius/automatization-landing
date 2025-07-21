@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="lt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strateginis Automatizavimo Prioritetų Skaičiuotuvas</title>
+    <style>
+        :root {
+            --primary-color: #0056b3; --primary-hover: #004494; --light-gray: #f8f9fa;
+            --medium-gray: #e9ecef; --dark-gray: #343a40; --border-color: #dee2e6;
+            --green: #28a745; --blue: #007bff; --yellow: #ffc107; --red: #dc3545;
+            --gray: #6c757d; --purple: #6f42c1;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05); --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+            --dot-size: 20px;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0; padding: 1rem; background-color: var(--medium-gray);
+            color: var(--dark-gray); line-height: 1.6;
+        }
+        .container {
+            max-width: 900px; margin: 1rem auto; background-color: #fff; padding: 2.5rem;
+            border-radius: 16px; box-shadow: var(--shadow-md);
+        }
+        .header { text-align: center; margin-bottom: 2.5rem; position: relative; }
+        h1 { color: var(--primary-color); margin-bottom: 0.5rem; font-size: 2.2rem; font-weight: 700; }
+        .subtitle { font-size: 1.1rem; color: #666; margin-top: 0; }
+        h2, h3 { color: var(--primary-color); text-align: center; }
+        .form-section { background: var(--light-gray); padding: 1.5rem; border-radius: 12px; margin-bottom: 2rem; border-left: 4px solid var(--primary-color); }
+        label { display: block; margin-bottom: 0.25rem; font-weight: 600; }
+        .label-range-description { font-size: 0.8rem; color: #888; font-weight: normal; margin-bottom: 0.75rem; }
+        input[type="range"] { margin-top: 0.5rem; }
+        /* --- THIS IS THE FIX --- */
+        .slider-labels { display: flex; justify-content: center; margin-top: 0.5rem; align-items: center; }
+        .current-value { background: var(--primary-color); color: white; padding: 0.25rem 0.75rem; border-radius: 6px; font-weight: bold; font-size: 1em; display: inline-flex; align-items: center; min-width: 3.5rem; justify-content: center; }
+        .current-value-text { font-size: 0.9em; color: white; opacity: 0.9; margin-left: 0.5rem; font-weight: normal; }
+        .dual-input { display: grid; grid-template-columns: 1fr 1fr; gap: 1.75rem; }
+        #main-button {
+            width: 100%; padding: 1rem 1.25rem; border: none; border-radius: 10px; font-size: 1.2rem;
+            font-weight: bold; cursor: pointer; transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 1px;
+            background: linear-gradient(45deg, var(--primary-color), var(--blue)); color: white; box-shadow: var(--shadow-sm);
+            margin-top: 1.5rem;
+        }
+        #main-button:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0, 123, 255, 0.3); }
+        #results-container { animation: fadeIn 0.5s ease-out; }
+        .result { margin-top: 2.5rem; display: grid; grid-template-columns: 1fr 1.5fr; gap: 2.5rem; align-items: center; }
+        .quadrant-visualization { position: relative; width: 100%; aspect-ratio: 1/1; display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; border: 2px solid var(--border-color); border-radius: 8px; }
+        .quadrant-zone { padding: 0.5rem; text-align: center; display: flex; align-items: center; justify-content: center; font-weight: bold; color: rgba(0,0,0,0.5); font-size: 0.9rem;}
+        #q-rd { background-color: rgba(255, 193, 7, 0.2); } #q-green { background-color: rgba(40, 167, 69, 0.2); }
+        #q-low { background-color: rgba(108, 117, 125, 0.2); } #q-red { background-color: rgba(220, 53, 69, 0.2); }
+        #quadrant-dot {
+            position: absolute;
+            width: var(--dot-size);
+            height: var(--dot-size);
+            background-color: var(--primary-color);
+            border-radius: 50%;
+            border: 3px solid white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5);
+            top: 0;
+            left: 0;
+            transition: transform 0.5s ease-in-out;
+        }
+        .axis-label { position: absolute; font-weight: bold; color: #666; font-size: 0.8rem; }
+        #y-axis { left: -4rem; top: 50%; transform: translateY(-50%) rotate(-90deg); }
+        #x-axis { bottom: -2.5rem; left: 50%; transform: translateX(-50%); }
+        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .metric-card { background: var(--light-gray); padding: 1.25rem; border-radius: 12px; text-align: center; border-bottom: 4px solid var(--medium-gray); transition: transform 0.2s ease, box-shadow 0.2s ease;}
+        .metric-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-md); }
+        .metric-label { font-weight: bold; display: block; font-size: 0.9em; margin-bottom: 0.5rem; }
+        .metric-value { font-size: 2.2rem; font-weight: bold; color: var(--primary-color); }
+        .metric-explanation { font-size: 0.85em; margin-top: 0.75rem; min-height: 3rem; font-weight: 500;}
+        .explanation-good { color: #1e7e34; } .explanation-neutral { color: #856404; } .explanation-bad { color: #a94442; }
+        #helpButton { position: absolute; top: 0; right: 0; width: 40px; height: 40px; border-radius: 50%; background-color: var(--medium-gray); border: none; font-size: 1.5rem; cursor: pointer; transition: background-color 0.2s; }
+        #helpButton:hover { background-color: var(--border-color); }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); align-items: center; justify-content: center; }
+        .modal-content { background-color: #fff; padding: 2rem 2.5rem; border-radius: 10px; max-width: 600px; width: 90%; position: relative; box-shadow: var(--shadow-md); animation: fadeIn 0.3s; }
+        .modal-content h2, .modal-content h3 { text-align: left; }
+        .modal-content ul { padding-left: 1.25rem; }
+        .modal-content li { margin-bottom: 0.75rem; }
+        .modal-link { display: inline-block; margin-top: 1rem; padding: 0.75rem 1.25rem; background-color: var(--primary-color); color: white; text-decoration: none; border-radius: 8px; font-weight: bold; transition: background-color 0.2s; }
+        .modal-link:hover { background-color: var(--primary-hover); }
+        .close-button { color: #aaa; position: absolute; top: 0.5rem; right: 1rem; font-size: 2rem; font-weight: bold; cursor: pointer; }
+        input[type="text"] { width: 100%; padding: 0.75rem; margin-bottom: 0.5rem; border: 2px solid var(--border-color); border-radius: 8px; font-size: 1rem; transition: border-color 0.2s; }
+        input[type="text"]:focus { border-color: var(--primary-color); outline: none; }
+        .error { color: var(--red); font-size: 0.9em; margin-top: 0.25rem; margin-bottom: 1rem; background: rgba(220, 53, 69, 0.1); padding: 0.5rem 0.75rem; border-radius: 6px; }
+        .history { margin-top: 3rem; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1.25rem; background: white; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow-sm); }
+        th, td { padding: 1rem 0.75rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { background-color: var(--primary-color); color: white; text-transform: uppercase; font-size: 0.8rem; }
+        .history-controls { display: flex; justify-content: center; gap: 1rem; margin-top: 1.5rem; }
+        .history-controls .button { width: auto; font-size: 0.9rem; padding: 0.75rem 1.5rem; background: var(--red); color: white; }
+        .history-controls .button.export { background-color: var(--primary-color); }
+        @media (max-width: 768px) {
+            body { padding: 0.5rem; }
+            .container { padding: 1.5rem; }
+            h1 { font-size: 1.8rem; }
+            .dual-input, .result, .metrics-grid { grid-template-columns: 1fr; }
+            #y-axis { display: none; }
+            #x-axis { bottom: -2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button id="helpButton" title="Pagalba">?</button>
+            <h1>DI Automatizavimo vertės skaičiuoklė</h1>
+            <p class="subtitle">Įvertinkite užduotis ir nustatykite prioritetus remdamiesi patikima metodologija.</p>
+        </div>
+        
+        <form id="taskForm">
+            <div class="form-section">
+                <label for="taskDescription">Užduoties pavadinimas</label>
+                <input type="text" id="taskDescription" required placeholder="Pvz., Mėnesio ataskaitų generavimas">
+                <div id="taskDescriptionError" class="error" style="display: none;">Prašome įvesti aprašymą.</div>
+            </div>
+            
+            <div class="dual-input">
+                <div class="slider-group" id="desire-group"></div>
+                <div class="slider-group" id="capability-group"></div>
+                <div class="slider-group" id="autonomy-group"></div>
+                <div class="slider-group" id="complexity-group"></div>
+                <div class="slider-group" id="importance-group"></div>
+                <div class="slider-group" id="risk-group"></div>
+            </div>
+
+            <button type="submit" id="main-button">🚀 Analizuoti</button>
+        </form>
+
+        <div id="results-container" style="display: none;">
+            <h3>Rezultatai</h3>
+            <div class="result">
+                <div class="quadrant-visualization" id="quadrant-container">
+                    <div class="quadrant-zone" id="q-rd">R&D Zona</div>
+                    <div class="quadrant-zone" id="q-green">Žalia Zona</div>
+                    <div class="quadrant-zone" id="q-low">Žemas Prioritetas</div>
+                    <div class="quadrant-zone" id="q-red">Raudona Zona</div>
+                    <div class="axis-label" id="y-axis">Darbuotojų noras</div>
+                    <div class="axis-label" id="x-axis">Techninės galimybės</div>
+                    <div id="quadrant-dot"></div>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-card"><span class="metric-label">Prioriteto Balas</span><span id="priorityScore" class="metric-value"></span><p class="metric-explanation" id="priorityScore-explanation"></p></div>
+                    <div class="metric-card"><span class="metric-label">HA Index</span><span id="humanAgencyIndex" class="metric-value"></span><p class="metric-explanation" id="humanAgencyIndex-explanation"></p></div>
+                    <div class="metric-card"><span class="metric-label">Potencialus ROI</span><span id="potentialROI" class="metric-value"></span><p class="metric-explanation" id="potentialROI-explanation"></p></div>
+                    <div class="metric-card"><span class="metric-label">Rizikos Lygis</span><span id="riskLevel" class="metric-value"></span><p class="metric-explanation" id="riskLevel-explanation"></p></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container history">
+        <h2>📊 Įvertinimų Istorija</h2>
+        <div style="overflow-x: auto;"><table id="historyTable"><thead></thead><tbody></tbody></table></div>
+        <div class="history-controls">
+            <button id="exportCsv" class="button export">Eksportuoti</button>
+            <button id="clearHistoryAndForm" class="button">Išvalyti Viską</button>
+        </div>
+    </div>
+
+    <div id="helpModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">×</span>
+            <h2>Pagalba</h2>
+            <p>Šis įrankis padeda nustatyti automatizavimo prioritetus, remiantis 6 faktoriais, ir suskirstyti juos į strategines zonas.</p>
+            
+            <h3>Strateginės Zonos</h3>
+            <ul>
+                <li>🟩 <strong>Žalia Zona:</strong> Aukštas noras ir galimybės. Vykdyti nedelsiant.</li>
+                <li>🟨 <strong>R&D Zona:</strong> Aukštas noras, bet mažos galimybės. Reikalingi tyrimai.</li>
+                <li>🟥 <strong>Raudona Zona:</strong> Mažas noras, bet didelės galimybės. Spręsti žmogiškąjį faktorių.</li>
+                <li>⬜ <strong>Žemo Prioriteto Zona:</strong> Mažas noras ir galimybės. Atidėti.</li>
+            </ul>
+
+            <h3>Vertinimo Kriterijai</h3>
+            <ul>
+                <li><strong>D (Noras):</strong> Kaip stipriai komanda ir darbuotojai nori šios automatizacijos?</li>
+                <li><strong>C (Galimybės):</strong> Kaip lengva tai įgyvendinti su dabartinėmis technologijomis ir žiniomis?</li>
+                <li><strong>A (Autonomija):</strong> Kiek kontrolės darbuotojas nori išlaikyti automatizuotame procese?</li>
+                <li><strong>T (Sudėtingumas):</strong> Kiek užduotis yra kintanti, reikalaujanti išimčių valdymo ar kūrybiškumo?</li>
+                <li><strong>S (Svarba):</strong> Kiek sėkmingas automatizavimas prisidėtų prie įmonės strateginių tikslų?</li>
+                <li><strong>R (Rizika):</strong> Kokia yra klaidų, duomenų praradimo ar kitokio neigiamo poveikio tikimybė?</li>
+            </ul>
+
+             <h3>Metodologija</h3>
+             <p>Skaičiuoklė remiasi moksliniu tyrimu, aprašančiu žmogaus ir technologijų sąveiką automatizavimo procesuose. Daugiau informacijos galite rasti čia:</p>
+             <a href="https://arxiv.org/abs/2506.06576" target="_blank" class="modal-link">Skaityti tyrimą (arXiv:2506.06576)</a>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const factors = {
+        desire:     { label: 'Darbuotojo Noras (D)',       text: ['Pasipriešinimas', 'Skeptikas', 'Abejoja', 'Nelinkęs', 'Neutralus', 'Šiek tiek nori', 'Teigiamas', 'Entuziastingas', 'Labai nori', 'Svajonė']},
+        capability: { label: 'Techn. Galimybės (C)',     text: ['Neįmanoma', 'Itin sunku', 'Sudėtinga', 'Įmanoma, bet sunku', 'Neutralu', 'Įmanoma', 'Nesudėtinga', 'Paprasta', 'Labai paprasta', 'Lengvai įgyvendinama']},
+        autonomy:   { label: 'Autonomijos Poreikis (A)', text: ['Visiška automatika', 'Minimali kontrolė', 'I dalies automatinis', 'Subalansuotas', 'Reikalinga kontrolė', 'Svarbi kontrolė', 'Didelė kontrolė', 'Beveik visiška kontrolė', 'Visiška kontrolė', 'Būtina priežiūra']},
+        complexity: { label: 'Užduoties Sudėtingumas (T)',text:['Itin paprasta', 'Labai paprasta', 'Paprasta', 'Nesudėtinga', 'Vidutiniška', 'Šiek tiek sudėtinga', 'Gana sudėtinga', 'Sudėtinga', 'Labai sudėtinga', 'Ekstremali']},
+        importance: { label: 'Strateginė Svarba (S)',    text:['Nesvarbi', 'Mažai svarbi', 'Šiek tiek svarbi', 'Vidutiniškai svarbi', 'Svarbi', 'Gana svarbi', 'Labai svarbi', 'Kritinė', 'Strategiškai būtina', 'Verslo pagrindas']},
+        risk:       { label: 'Automatizavimo Rizika (R)', text:['Jokios rizikos', 'Minimali', 'Maža', 'Valdoma', 'Vidutinė', 'Padidinta', 'Didelė', 'Labai didelė', 'Itin didelė', 'Ekstremali']}
+    };
+
+    Object.keys(factors).forEach(id => {
+        const f = factors[id];
+        const group = document.getElementById(`${id}-group`);
+        group.innerHTML = `
+            <label for="${id}">${f.label}</label>
+            <p class="label-range-description">0 (${f.text[0]}) – 10 (${f.text[f.text.length-1]})</p>
+            <input type="range" id="${id}" min="0" max="10" value="5">
+            <div class="slider-labels">
+                <span class="current-value" id="${id}-value"></span>
+            </div>
+        `;
+    });
+
+    const form = document.getElementById('taskForm');
+    const resultsContainer = document.getElementById('results-container');
+    const quadrantContainer = document.getElementById('quadrant-container');
+    const quadrantDot = document.getElementById('quadrant-dot');
+    
+    const calculate = {
+        priorityScore: (v) => {
+            const weights = { desire: 0.25, capability: 0.25, importance: 0.18, autonomy: -0.15, complexity: -0.12, risk: -0.05 };
+            const rawScore = Object.keys(weights).reduce((acc, key) => acc + v[key] * weights[key], 0);
+            const minScore = -1.5 - 1.2 - 0.5;
+            const maxScore = 2.5 + 2.5 + 1.8;
+            return Math.max(0, Math.min(10, 10 * (rawScore - minScore) / (maxScore - minScore)));
+        },
+        humanAgencyIndex: (d, a) => Math.min(10, Math.max(0, (d * (10 - a)) / 10)),
+        potentialROI: (d, c) => Math.min(10, Math.sqrt(d * c)),
+        riskLevel: (r, t, a) => Math.min(10, (r * 0.6) + (t * 0.4) + (a < 3 ? 2 : 0))
+    };
+
+    function getMetricExplanation(metric, value) {
+        let text = '', sentiment = 'neutral';
+        switch (metric) {
+            case 'priorityScore':
+                if (value > 8) { text = 'Itin aukštas prioritetas. Rekomenduojama veikti nedelsiant.'; sentiment = 'good'; }
+                else if (value > 6) { text = 'Aukštas prioritetas. Geras kandidatas automatizavimui.'; sentiment = 'good'; }
+                else if (value > 4) { text = 'Vidutinis prioritetas. Reikalinga detalesnė analizė.'; sentiment = 'neutral'; }
+                else { text = 'Žemas prioritetas. Šiuo metu neaktualu.'; sentiment = 'bad'; }
+                break;
+            case 'humanAgencyIndex':
+                if (value > 7) { text = 'Puikus balansas tarp noro ir kontrolės. Idealu hibridiniam darbui.'; sentiment = 'good'; }
+                else if (value > 4) { text = 'Geras balansas. Žmogus ir technologija gali dirbti kartu.'; sentiment = 'neutral'; }
+                else { text = 'Prastas balansas. Gali kilti konfliktas tarp noro ir kontrolės poreikio.'; sentiment = 'bad'; }
+                break;
+            case 'potentialROI':
+                if (value > 7) { text = 'Labai aukštas grąžos potencialas. Tikėtina didelė nauda.'; sentiment = 'good'; }
+                else if (value > 4) { text = 'Geras grąžos potencialas. Reikia vertinti kaštus.'; sentiment = 'neutral'; }
+                else { text = 'Žemas grąžos potencialas. Tikėtina maža nauda.'; sentiment = 'bad'; }
+                break;
+            case 'riskLevel':
+                if (value > 7) { text = 'Labai aukšta rizika. Reikalingas detalus rizikų valdymo planas.'; sentiment = 'bad'; }
+                else if (value > 4) { text = 'Vidutinė rizika. Reikia identifikuoti ir suvaldyti problemas.'; sentiment = 'neutral'; }
+                else { text = 'Žema rizika. Projektas yra gana saugus įgyvendinti.'; sentiment = 'good'; }
+                break;
+        }
+        return { text, sentiment };
+    }
+
+    function updateSliderDisplay(id, value) {
+        const valueEl = document.getElementById(`${id}-value`);
+        const f = factors[id];
+        const textIndex = Math.min(f.text.length - 1, Math.floor(value / 10 * (f.text.length - 1)));
+        valueEl.innerHTML = `${value} <span class="current-value-text">${f.text[textIndex]}</span>`;
+    }
+
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!document.getElementById('taskDescription').value.trim()) {
+            document.getElementById('taskDescriptionError').style.display = 'block'; return;
+        }
+        document.getElementById('taskDescriptionError').style.display = 'none';
+
+        const values = {};
+        Object.keys(factors).forEach(key => values[key] = parseInt(document.getElementById(key).value));
+
+        const results = {
+            priorityScore: calculate.priorityScore(values),
+            humanAgencyIndex: calculate.humanAgencyIndex(values.desire, values.autonomy),
+            potentialROI: calculate.potentialROI(values.desire, values.capability),
+            riskLevel: calculate.riskLevel(values.risk, values.complexity, values.autonomy)
+        };
+        
+        displayResults(results, values);
+        saveToHistory({ ...values, description: document.getElementById('taskDescription').value, ...results });
+    });
+
+    form.addEventListener('input', (e) => {
+        if (e.target.type === 'range') updateSliderDisplay(e.target.id, e.target.value);
+    });
+    
+    function resetForm() {
+        form.reset();
+        Object.keys(factors).forEach(key => updateSliderDisplay(key, 5));
+        resultsContainer.style.display = 'none';
+    }
+
+    function displayResults(results, values) {
+        Object.keys(results).forEach(key => {
+            document.getElementById(key).innerText = results[key].toFixed(1);
+            const explanation = getMetricExplanation(key, results[key]);
+            const explanationEl = document.getElementById(`${key}-explanation`);
+            explanationEl.innerText = explanation.text;
+            explanationEl.className = `metric-explanation explanation-${explanation.sentiment}`;
+        });
+        
+        const containerWidth = quadrantContainer.clientWidth;
+        const containerHeight = quadrantContainer.clientHeight;
+        const dotRadius = 10;
+
+        let xPos = (values.capability / 10) * containerWidth;
+        let yPos = (1 - (values.desire / 10)) * containerHeight;
+
+        xPos = Math.max(dotRadius, Math.min(xPos, containerWidth - dotRadius));
+        yPos = Math.max(dotRadius, Math.min(yPos, containerHeight - dotRadius));
+
+        quadrantDot.style.transform = `translate(${xPos}px, ${yPos}px) translate(-50%, -50%)`;
+
+        resultsContainer.style.display = 'block';
+        resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function renderHistory() {
+        const tasks = JSON.parse(localStorage.getItem('automationHistory') || '[]');
+        const head = document.querySelector("#historyTable thead");
+        const body = document.querySelector("#historyTable tbody");
+        head.innerHTML = `<tr><th>Užduotis</th><th>Prior.</th><th>D</th><th>C</th><th>A</th><th>T</th><th>S</th><th>R</th></tr>`;
+        body.innerHTML = tasks.map(task => `
+            <tr>
+                <td>${task.description || ''}</td>
+                <td><b>${task.priorityScore !== undefined ? task.priorityScore.toFixed(1) : 'N/A'}</b></td>
+                <td>${task.desire !== undefined ? task.desire : 'N/A'}</td>
+                <td>${task.capability !== undefined ? task.capability : 'N/A'}</td>
+                <td>${task.autonomy !== undefined ? task.autonomy : 'N/A'}</td>
+                <td>${task.complexity !== undefined ? task.complexity : 'N/A'}</td>
+                <td>${task.importance !== undefined ? task.importance : 'N/A'}</td>
+                <td>${task.risk !== undefined ? task.risk : 'N/A'}</td>
+            </tr>
+        `).join('');
+    }
+
+    function saveToHistory(taskData) {
+        let tasks = JSON.parse(localStorage.getItem('automationHistory') || '[]');
+        tasks.unshift({ id: Date.now(), ...taskData });
+        localStorage.setItem('automationHistory', JSON.stringify(tasks));
+        renderHistory();
+    }
+    
+    document.getElementById('clearHistoryAndForm').addEventListener('click', () => {
+        if (confirm('Ar tikrai norite išvalyti visą įvertinimų istoriją ir formos laukus?')) {
+            localStorage.removeItem('automationHistory');
+            renderHistory();
+            resetForm();
+        }
+    });
+
+    document.getElementById('exportCsv').addEventListener('click', () => {
+        const tasks = JSON.parse(localStorage.getItem('automationHistory') || '[]');
+        if (tasks.length === 0) return alert('Istorija tuščia.');
+        const headers = ['ID', 'Užduotis', 'Prioritetas', 'HA Index', 'ROI', 'Rizika', 'Noras(D)', 'Galimybės(C)', 'Autonomija(A)', 'Sudėtingumas(T)', 'Svarba(S)', 'Rizika(R)'];
+        const csv = [headers.join(','), ...tasks.map(t => [t.id, `"${(t.description || '').replace(/"/g, '""')}"`, t.priorityScore.toFixed(1), t.humanAgencyIndex.toFixed(1), t.potentialROI.toFixed(1), t.riskLevel.toFixed(1), t.desire, t.capability, t.autonomy, t.complexity, t.importance, t.risk].join(','))].join('\n');
+        const link = document.createElement('a');
+        link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+        link.download = 'automatizavimo_istorija.csv';
+        link.click();
+    });
+
+    const helpModal = document.getElementById('helpModal');
+    document.getElementById('helpButton').onclick = () => helpModal.style.display = 'flex';
+    document.querySelector('.close-button').onclick = () => helpModal.style.display = 'none';
+    window.onclick = (e) => { if (e.target == helpModal) helpModal.style.display = 'none'; };
+
+    Object.keys(factors).forEach(id => updateSliderDisplay(id, 5));
+    renderHistory();
+});
+</script>
+</body>
+</html>

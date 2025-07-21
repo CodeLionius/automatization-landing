@@ -5,7 +5,7 @@ interface SectionProps {
 }
 
 // Footer sekcija
-const Footer: React.FC<SectionProps & { onShowPrivacy: () => void }> = React.memo(({ t, onShowPrivacy }) => (
+const Footer: React.FC<SectionProps & { onShowPrivacy: () => void; setShowCalculator: (show: boolean) => void; }> = React.memo(({ t, onShowPrivacy, setShowCalculator }) => (
   <footer className="bg-gray-800 text-white py-10">
     <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
       <div>
@@ -19,7 +19,6 @@ const Footer: React.FC<SectionProps & { onShowPrivacy: () => void }> = React.mem
           <li><a href="#features" className="text-gray-400 hover:text-white transition duration-300">{t.nav.features}</a></li>
           <li><a href="#feedback" className="text-gray-400 hover:text-white transition duration-300">{t.contactUs}</a></li>
           <li><a href="#" onClick={e => { e.preventDefault(); onShowPrivacy(); }} className="text-gray-400 hover:text-white transition duration-300">{t.privacy}</a></li>
-          
         </ul>
       </div>
       <div id="footer-contact">

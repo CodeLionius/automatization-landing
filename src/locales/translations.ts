@@ -8,6 +8,7 @@ const translations = {
       features: 'Features',
       contactUsHeader: 'Contact Us',
       contact: 'Contact',
+      calculator: 'Calculators'
     },
     heroTitle: 'Revolutionize Your Business with ',
     heroHighlight: 'AI Automation',
@@ -51,6 +52,14 @@ const translations = {
     errorFill: 'Please fill in all fields before submitting.',
     errorEmail: 'Please enter a valid email address.',
     thankYou: 'Thank you for your feedback! We will get back to you soon.',
+    calculatorPage: {
+      title: 'Calculators',
+      back: '← Back to Main Page',
+      autoDI: 'AI Automation Value Calculator',
+      roi: 'ROI Calculator',
+      ltVersion: 'LT Version',
+      enVersion: 'EN Version'
+    }
   },
   lt: {
     siteName: 'AIAutomate',
@@ -59,6 +68,7 @@ const translations = {
       features: 'Funkcijos',
       contactUsHeader: 'Susisiekti',
       contact: 'Kontaktai',
+      calculator: 'Skaičiuoklės'
     },
     heroTitle: 'Revoliucionuokite savo verslą su ',
     heroHighlight: 'DI automatizacija',
@@ -102,6 +112,14 @@ const translations = {
     errorFill: 'Užpildykite visus laukus prieš siųsdami.',
     errorEmail: 'Įveskite teisingą el. pašto adresą.',
     thankYou: 'Ačiū už jūsų atsiliepimą! Netrukus su jumis susisieksime.',
+    calculatorPage: {
+      title: 'Skaičiuoklės',
+      back: '← Atgal į pagrindinį puslapį',
+      autoDI: 'DI Automatizavimo vertės skaičiuoklė',
+      roi: 'Investicijų pelningumo rodiklio (ROI) skaičiuoklė',
+      ltVersion: 'LT Versija',
+      enVersion: 'EN Versija'
+    }
   }
 };
 
