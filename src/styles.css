@@ -1,12 +1,9 @@
-body {
-  font-family: sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  -webkit-tap-highlight-color: transparent;
-  -webkit-touch-callout: none;
-}
+/*
+  The custom styles previously defined here should be refactored
+  to use Tailwind CSS classes directly within your React components.
+  This file now only imports Tailwind's base, components, and utilities.
+*/
 
-h1 {
-  font-size: 1.5rem;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

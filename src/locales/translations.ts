@@ -59,6 +59,31 @@ const translations = {
       roi: 'ROI Calculator',
       ltVersion: 'LT Version',
       enVersion: 'EN Version'
+    },
+    privacyPolicy: {
+      back: 'Go Back',
+      title: 'Privacy Policy',
+      intro: 'This privacy policy explains how we collect, use, and store your personal data when you use this page. We comply with the requirements of the European Union\'s General Data Protection Regulation (GDPR).',
+      section1Title: '1. What data do we collect?',
+      section1List1: 'Contact information (name, email, message content, if you fill out a contact form or feedback)',
+      section1List2: 'Technical information (IP address, browser type, device information, cookies, etc.)',
+      section2Title: '2. How do we use your data?',
+      section2List1: 'To administer and respond to your inquiries or feedback',
+      section2List2: 'To ensure the functionality, security, and quality of the page',
+      section2List3: 'For statistical analysis (anonymously)',
+      section3Title: '3. Data storage and protection',
+      section3Text: 'Your data is stored on secure servers and is accessible only to authorized personnel. All reasonable technical and organizational measures have been taken to protect your data.',
+      section4Title: '4. Your rights',
+      section4List1: 'To receive information about your processed data',
+      section4List2: 'To request correction or deletion of data',
+      section4List3: 'To request restriction of data processing',
+      section4List4: 'To lodge a complaint with a supervisory authority',
+      section5Title: '5. Cookies',
+      section5Text: 'The page uses essential cookies that are necessary for the proper functioning of the website. You can manage cookie settings in your browser.',
+      section6Title: '6. Contact',
+      section6Text: 'If you have any questions about the privacy policy or your data, please contact us by email:',
+      lastUpdated: 'Last updated:',
+      emailAddress: 'info@aiautomate.com'
     }
   },
   lt: {
@@ -119,6 +144,31 @@ const translations = {
       roi: 'Investicijų pelningumo rodiklio (ROI) skaičiuoklė',
       ltVersion: 'LT Versija',
       enVersion: 'EN Versija'
+    },
+    privacyPolicy: {
+      back: 'Grįžti',
+      title: 'Privatumo politika',
+      intro: 'Ši privatumo politika paaiškina, kaip mes renkame, naudojame ir saugome jūsų asmens duomenis, kai naudojatės šiuo puslapiu. Mes laikomės Europos Sąjungos Bendrojo duomenų apsaugos reglamento (BDAR, angl. GDPR) reikalavimų.',
+      section1Title: '1. Kokius duomenis renkame?',
+      section1List1: 'Kontaktinė informacija (vardas, el. paštas, žinutės turinys, jei užpildote kontaktų formą ar atsiliepimą)',
+      section1List2: 'Techninė informacija (IP adresas, naršyklės tipas, įrenginio informacija, slapukai ir pan.)',
+      section2Title: '2. Kaip naudojame jūsų duomenis?',
+      section2List1: 'Jūsų užklausų ar atsiliepimų administravimui ir atsakymui',
+      section2List2: 'Puslapio veikimo, saugumo ir kokybės užtikrinimui',
+      section2List3: 'Statistinei analizei (anonimiškai)',
+      section3Title: '3. Duomenų saugojimas ir apsauga',
+      section3Text: 'Jūsų duomenys saugomi saugiose serveriuose ir prieinami tik įgaliotiems asmenims. Imtasi visų pagrįstų techninių ir organizacinių priemonių jūsų duomenų apsaugai.',
+      section4Title: '4. Jūsų teisės',
+      section4List1: 'Gauti informaciją apie tvarkomus jūsų duomenis',
+      section4List2: 'Prašyti ištaisyti ar ištrinti duomenis',
+      section4List3: 'Prašyti apriboti duomenų tvarkymą',
+      section4List4: 'Pateikti skundą priežiūros institucijai',
+      section5Title: '5. Slapukai (Cookies)',
+      section5Text: 'Puslapyje naudojami būtini slapukai, kurie reikalingi tinkamam svetainės veikimui. Jūs galite valdyti slapukų nustatymus savo naršyklėje.',
+      section6Title: '6. Kontaktai',
+      section6Text: 'Jei turite klausimų dėl privatumo politikos ar savo duomenų, susisiekite el. paštu:',
+      lastUpdated: 'Atnaujinta:',
+      emailAddress: 'info@aiautomate.com'
     }
   }
 };

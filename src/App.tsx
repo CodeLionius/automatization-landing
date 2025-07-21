@@ -97,8 +97,25 @@ const AIServiceLandingPage = () => {
     </>
   );
 
+  const handleNavLinkClick = useCallback((sectionId: string, closeMenu: boolean = false) => {
+    setShowCalculator(false);
+    setShowPrivacy(false); // Ensure privacy policy is hidden
+    refreshFeedback();
+    setActiveSection(sectionId);
+    if (closeMenu) {
+      toggleMenu();
+    }
+  }, [refreshFeedback, toggleMenu, setActiveSection]);
+
+  const handleCalculatorClick = useCallback(() => {
+    setShowCalculator(true);
+    setShowPrivacy(false); // Ensure privacy policy is hidden
+    refreshFeedback();
+    setIsMenuOpen(false); // Close menu on mobile
+  }, [refreshFeedback]);
+
   if (showPrivacy) {
-    return <PrivacyPolicyPage setShowPrivacy={setShowPrivacy} />;
+    return <PrivacyPolicyPage setShowPrivacy={setShowPrivacy} lang={lang} />;
   }
 
   return (
@@ -107,13 +124,13 @@ const AIServiceLandingPage = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white shadow-sm py-4">
         <div className="container mx-auto px-4 flex justify-between items-center">
-          <div className="text-2xl font-bold text-blue-600"><a href="#" onClick={() => { setShowCalculator(false); refreshFeedback(); }}>{t.siteName}</a></div>
+          <div className="text-2xl font-bold text-blue-600"><a href="#" onClick={() => handleNavLinkClick("#home")}>{t.siteName}</a></div>
           <nav className="hidden md:flex space-x-6">
-            <a href="#home" onClick={() => { setShowCalculator(false); refreshFeedback(); }} className={`text-gray-600 hover:text-blue-600 transition duration-300 ${activeSection === "#home" ? "text-blue-700 font-bold underline" : ""}`}>{t.nav.home}</a>
-            <a href="#features" onClick={() => { setShowCalculator(false); refreshFeedback(); }} className={`text-gray-600 hover:text-blue-600 transition duration-300 ${activeSection === "#features" ? "text-blue-700 font-bold underline" : ""}`}>{t.nav.features}</a>
-            <a href="#feedback" onClick={() => { setShowCalculator(false); refreshFeedback(); }} className={`text-gray-600 hover:text-blue-600 transition duration-300 ${activeSection === "#feedback" ? "text-blue-700 font-bold underline" : ""}`}>{t.nav.contactUsHeader}</a>
-            <a href="#footer-contact" onClick={() => { setShowCalculator(false); refreshFeedback(); }} className={`text-gray-600 hover:text-blue-600 transition duration-300 ${activeSection === "#footer-contact" ? "text-blue-700 font-bold underline" : ""}`}>{t.nav.contact}</a>
-            <a href="#" onClick={() => setShowCalculator(true)} className={`text-gray-600 hover:text-blue-600 transition duration-300`}>{t.nav.calculator}</a>
+            <a href="#home" onClick={() => handleNavLinkClick("#home")} className={`text-gray-600 hover:text-blue-600 transition duration-300 ${activeSection === "#home" ? "text-blue-700 font-bold underline" : ""}`}>{t.nav.home}</a>
+            <a href="#features" onClick={() => handleNavLinkClick("#features")} className={`text-gray-600 hover:text-blue-600 transition duration-300 ${activeSection === "#features" ? "text-blue-700 font-bold underline" : ""}`}>{t.nav.features}</a>
+            <a href="#feedback" onClick={() => handleNavLinkClick("#feedback")} className={`text-gray-600 hover:text-blue-600 transition duration-300 ${activeSection === "#feedback" ? "text-blue-700 font-bold underline" : ""}`}>{t.nav.contactUsHeader}</a>
+            <a href="#footer-contact" onClick={() => handleNavLinkClick("#footer-contact")} className={`text-gray-600 hover:text-blue-600 transition duration-300 ${activeSection === "#footer-contact" ? "text-blue-700 font-bold underline" : ""}`}>{t.nav.contact}</a>
+            <a href="#" onClick={handleCalculatorClick} className={`text-gray-600 hover:text-blue-600 transition duration-300`}>{t.nav.calculator}</a>
           </nav>
           <div className="flex items-center space-x-2 ml-4">
             <button className={`px-2 py-1 rounded ${lang === 'en' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-200 text-gray-700'}`} onClick={() => handleLangChange('en')} aria-label="Switch to English">EN</button>
@@ -130,11 +147,11 @@ const AIServiceLandingPage = () => {
         {isMenuOpen && (
           <div className="md:hidden">
             <nav className="px-2 pt-2 pb-4 space-y-1 sm:px-3">
-              <a href="#home" onClick={() => {setShowCalculator(false); refreshFeedback(); toggleMenu();}} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">{t.nav.home}</a>
-              <a href="#features" onClick={() => {setShowCalculator(false); refreshFeedback(); toggleMenu();}} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">{t.nav.features}</a>
-              <a href="#feedback" onClick={() => {setShowCalculator(false); refreshFeedback(); toggleMenu();}} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">{t.nav.contactUsHeader}</a>
-              <a href="#footer-contact" onClick={() => {setShowCalculator(false); refreshFeedback(); toggleMenu();}} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">{t.nav.contact}</a>
-              <a href="#" onClick={() => {setShowCalculator(true); toggleMenu();}} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">{t.nav.calculator}</a>
+              <a href="#home" onClick={() => handleNavLinkClick("#home", true)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">{t.nav.home}</a>
+              <a href="#features" onClick={() => handleNavLinkClick("#features", true)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">{t.nav.features}</a>
+              <a href="#feedback" onClick={() => handleNavLinkClick("#feedback", true)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">{t.nav.contactUsHeader}</a>
+              <a href="#footer-contact" onClick={() => handleNavLinkClick("#footer-contact", true)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">{t.nav.contact}</a>
+              <a href="#" onClick={handleCalculatorClick} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">{t.nav.calculator}</a>
             </nav>
           </div>
         )}

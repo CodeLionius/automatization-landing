@@ -6,9 +6,18 @@ A modern, responsive landing page for an AI automation service, built with React
 - Responsive design (mobile & desktop)
 - Multi-language support (English & Lithuanian)
 - Modern UI with Tailwind CSS
-- Feedback form integration (Tally)
+- Feedback/contact form integration (Tally) with robust reloading (always visible when navigating)
+- Interactive calculators (ROI, AI Automation Value) in both EN and LT
 - Easy deployment to Vercel, Netlify, or GitHub Pages
 - Unit tests with React Testing Library
+
+## App Architecture & Logic
+- **App.tsx** is the main entry point, handling routing, language switching, and state for privacy/calculator modals.
+- **Navigation**: All main sections (Home, Features, Contact Us, Calculators) are accessible from the header and mobile menu. Language can be switched at any time.
+- **Tally Feedback Form**: The contact form is embedded via iframe and is always reloaded when navigating to the feedback section, ensuring it is never blank or stuck (even after switching sections or languages).
+- **Calculators**: Two calculators (ROI and AI Automation Value) are available in both English and Lithuanian. The correct version is shown based on language and user selection.
+- **Localization**: All UI text is managed via a single translations file. Adding new languages is straightforward.
+- **Footer**: Contains company info, privacy policy, and quick links (no calculator link).
 
 ## Getting Started
 
@@ -55,13 +64,15 @@ You can deploy this project for free using:
 ## Project Structure
 ```
 ├── public/
+│   └── calculators/           # Standalone HTML calculators (EN/LT)
 ├── src/
 │   ├── components/
+│   │   └── sections/         # Main page sections (Hero, Features, CTA, Footer, etc.)
 │   ├── constants/
 │   ├── lib/
-│   ├── locales/
+│   ├── locales/              # translations.ts (all UI text)
 │   ├── types/
-│   ├── App.tsx
+│   ├── App.tsx               # Main app logic
 │   ├── App.test.tsx
 │   └── index.tsx
 ├── package.json
