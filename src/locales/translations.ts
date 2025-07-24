@@ -8,7 +8,7 @@ const translations = {
       features: 'Features',
       contactUsHeader: 'Contact Us',
       contact: 'Contact',
-      calculator: 'Calculators'
+      calculator: 'Tools'
     },
     heroTitle: 'Revolutionize Your Business with ',
     heroHighlight: 'AI Automation',
@@ -53,7 +53,7 @@ const translations = {
     errorEmail: 'Please enter a valid email address.',
     thankYou: 'Thank you for your feedback! We will get back to you soon.',
     calculatorPage: {
-      title: 'Calculators',
+      title: 'Tools',
       back: '← Back to Main Page',
       autoDI: 'AI Automation Value Calculator',
       roi: 'ROI Calculator',
@@ -93,7 +93,7 @@ const translations = {
       features: 'Funkcijos',
       contactUsHeader: 'Susisiekti',
       contact: 'Kontaktai',
-      calculator: 'Skaičiuoklės'
+      calculator: 'Įrankiai'
     },
     heroTitle: 'Revoliucionuokite savo verslą su ',
     heroHighlight: 'DI automatizacija',
@@ -138,7 +138,7 @@ const translations = {
     errorEmail: 'Įveskite teisingą el. pašto adresą.',
     thankYou: 'Ačiū už jūsų atsiliepimą! Netrukus su jumis susisieksime.',
     calculatorPage: {
-      title: 'Skaičiuoklės',
+      title: 'Įrankiai',
       back: '← Atgal į pagrindinį puslapį',
       autoDI: 'DI Automatizavimo vertės skaičiuoklė',
       roi: 'Investicijų pelningumo rodiklio (ROI) skaičiuoklė',

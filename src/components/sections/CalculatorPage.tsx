@@ -22,13 +22,13 @@ const CalculatorPage: React.FC<CalculatorPageProps> = ({ lang }) => {
           <div>
             <h2 className="text-xl font-bold text-gray-800 mb-2">{t.autoDI}</h2>
             <div className="flex space-x-4">
-              <a href="#" onClick={() => setSelectedCalculator(lang === 'lt' ? "/calculators/Auto_DI_skaiciuokle.html" : "/calculators/Auto_DI_calculator_en.html")} className="text-blue-500 hover:underline">{lang === 'lt' ? t.ltVersion : t.enVersion}</a>
+              <a href="#" onClick={() => setSelectedCalculator(lang === 'lt' ? "/tools/Auto_DI_skaiciuokle.html" : "/tools/Auto_DI_calculator_en.html")} className="text-blue-500 hover:underline">{lang === 'lt' ? t.ltVersion : t.enVersion}</a>
             </div>
           </div>
           <div>
             <h2 className="text-xl font-bold text-gray-800 mb-2">{t.roi}</h2>
             <div className="flex space-x-4">
-              <a href="#" onClick={() => setSelectedCalculator(lang === 'lt' ? "/calculators/ROI_LT.html" : "/calculators/ROI_EN.html")} className="text-blue-500 hover:underline">{lang === 'lt' ? t.ltVersion : t.enVersion}</a>
+              <a href="#" onClick={() => setSelectedCalculator(lang === 'lt' ? "/tools/ROI_LT.html" : "/tools/ROI_EN.html")} className="text-blue-500 hover:underline">{lang === 'lt' ? t.ltVersion : t.enVersion}</a>
             </div>
           </div>
         </div>

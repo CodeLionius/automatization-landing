@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import clsx from 'clsx';
 
 import { translations, Lang, Translation } from './locales/translations';
 import HeroSection from './components/sections/HeroSection';
@@ -9,6 +10,39 @@ import CTASection from './components/sections/CTASection';
 import Footer from './components/sections/Footer';
 import PrivacyPolicyPage from './components/sections/PrivacyPolicyPage';
 import CalculatorPage from './components/sections/CalculatorPage';
+
+const navLinks = [
+  { id: "#home", label: "home" },
+  { id: "#features", label: "features" },
+  { id: "#feedback", label: "contactUsHeader" },
+  { id: "#footer-contact", label: "contact" },
+];
+
+const MainContent = ({ t, feedbackKey }: { t: Translation, feedbackKey: number }) => (
+  <>
+    <HeroSection t={t} />
+    <FeaturesSection t={t} />
+    <CTASection t={t} />
+    <section id="feedback" className="py-20 bg-gray-50">
+      <div className="container mx-auto px-4 max-w-3xl">
+        <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12 text-gray-800">{t.feedbackTitle}</h2>
+        <div className="bg-white p-8 rounded-xl shadow-lg border-t-4 border-blue-500">
+          <iframe
+            key={feedbackKey} // Priverčia React perkurti iframe
+            data-tally-src="https://tally.so/embed/mBJkv5?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"
+            loading="lazy"
+            width="100%"
+            height="361"
+            frameBorder={0}
+            marginHeight={0}
+            marginWidth={0}
+            title="Contact form"
+          ></iframe>
+        </div>
+      </div>
+    </section>
+  </>
+);
 
 // Pagrindinis komponentas
 const AIServiceLandingPage = () => {
@@ -71,32 +105,6 @@ const AIServiceLandingPage = () => {
   // Pridėta: funkcija atnaujinti feedbackKey
   const refreshFeedback = () => setFeedbackKey(Date.now());
 
-  const MainContent = () => (
-    <>
-      <HeroSection t={t} />
-      <FeaturesSection t={t} />
-      <CTASection t={t} />
-      <section id="feedback" className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4 max-w-3xl">
-          <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12 text-gray-800">{t.feedbackTitle}</h2>
-          <div className="bg-white p-8 rounded-xl shadow-lg border-t-4 border-blue-500">
-            <iframe
-              key={feedbackKey} // Priverčia React perkurti iframe
-              data-tally-src="https://tally.so/embed/mBJkv5?alignLeft=1&hideTitle=1&transparentBackground=1&dynamicHeight=1"
-              loading="lazy"
-              width="100%"
-              height="361"
-              frameBorder={0}
-              marginHeight={0}
-              marginWidth={0}
-              title="Contact form"
-            ></iframe>
-          </div>
-        </div>
-      </section>
-    </>
-  );
-
   const handleNavLinkClick = useCallback((sectionId: string, closeMenu: boolean = false) => {
     setShowCalculator(false);
     setShowPrivacy(false); // Ensure privacy policy is hidden
@@ -126,15 +134,24 @@ const AIServiceLandingPage = () => {
         <div className="container mx-auto px-4 flex justify-between items-center">
           <div className="text-2xl font-bold text-blue-600"><a href="#" onClick={() => handleNavLinkClick("#home")}>{t.siteName}</a></div>
           <nav className="hidden md:flex space-x-6">
-            <a href="#home" onClick={() => handleNavLinkClick("#home")} className={`text-gray-600 hover:text-blue-600 transition duration-300 ${activeSection === "#home" ? "text-blue-700 font-bold underline" : ""}`}>{t.nav.home}</a>
-            <a href="#features" onClick={() => handleNavLinkClick("#features")} className={`text-gray-600 hover:text-blue-600 transition duration-300 ${activeSection === "#features" ? "text-blue-700 font-bold underline" : ""}`}>{t.nav.features}</a>
-            <a href="#feedback" onClick={() => handleNavLinkClick("#feedback")} className={`text-gray-600 hover:text-blue-600 transition duration-300 ${activeSection === "#feedback" ? "text-blue-700 font-bold underline" : ""}`}>{t.nav.contactUsHeader}</a>
-            <a href="#footer-contact" onClick={() => handleNavLinkClick("#footer-contact")} className={`text-gray-600 hover:text-blue-600 transition duration-300 ${activeSection === "#footer-contact" ? "text-blue-700 font-bold underline" : ""}`}>{t.nav.contact}</a>
-            <a href="#" onClick={handleCalculatorClick} className={`text-gray-600 hover:text-blue-600 transition duration-300`}>{t.nav.calculator}</a>
+            {navLinks.map(link => (
+              <a
+                key={link.id}
+                href={link.id}
+                onClick={() => handleNavLinkClick(link.id)}
+                className={clsx(
+                  "text-gray-600 hover:text-blue-600 transition duration-300",
+                  { "text-blue-700 font-bold underline": activeSection === link.id }
+                )}
+              >
+                {t.nav[link.label as keyof typeof t.nav]}
+              </a>
+            ))}
+            <a href="#" onClick={handleCalculatorClick} className="text-gray-600 hover:text-blue-600 transition duration-300">{t.nav.calculator}</a>
           </nav>
           <div className="flex items-center space-x-2 ml-4">
-            <button className={`px-2 py-1 rounded ${lang === 'en' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-200 text-gray-700'}`} onClick={() => handleLangChange('en')} aria-label="Switch to English">EN</button>
-            <button className={`px-2 py-1 rounded ${lang === 'lt' ? 'bg-blue-600 text-white font-bold' : 'bg-gray-200 text-gray-700'}`} onClick={() => handleLangChange('lt')} aria-label="Perjungti į lietuvių kalbą">LT</button>
+            <button className={clsx("px-2 py-1 rounded", { 'bg-blue-600 text-white font-bold': lang === 'en', 'bg-gray-200 text-gray-700': lang !== 'en' })} onClick={() => handleLangChange('en')} aria-label="Switch to English">EN</button>
+            <button className={clsx("px-2 py-1 rounded", { 'bg-blue-600 text-white font-bold': lang === 'lt', 'bg-gray-200 text-gray-700': lang !== 'lt' })} onClick={() => handleLangChange('lt')} aria-label="Perjungti į lietuvių kalbą">LT</button>
           </div>
           <div className="md:hidden">
             <button onClick={toggleMenu} className="text-gray-600 focus:outline-none">
@@ -147,16 +164,22 @@ const AIServiceLandingPage = () => {
         {isMenuOpen && (
           <div className="md:hidden">
             <nav className="px-2 pt-2 pb-4 space-y-1 sm:px-3">
-              <a href="#home" onClick={() => handleNavLinkClick("#home", true)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">{t.nav.home}</a>
-              <a href="#features" onClick={() => handleNavLinkClick("#features", true)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">{t.nav.features}</a>
-              <a href="#feedback" onClick={() => handleNavLinkClick("#feedback", true)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">{t.nav.contactUsHeader}</a>
-              <a href="#footer-contact" onClick={() => handleNavLinkClick("#footer-contact", true)} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">{t.nav.contact}</a>
+              {navLinks.map(link => (
+                <a
+                  key={link.id}
+                  href={link.id}
+                  onClick={() => handleNavLinkClick(link.id, true)}
+                  className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
+                >
+                  {t.nav[link.label as keyof typeof t.nav]}
+                </a>
+              ))}
               <a href="#" onClick={handleCalculatorClick} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">{t.nav.calculator}</a>
             </nav>
           </div>
         )}
       </header>
-      {showCalculator ? <CalculatorPage lang={lang} /> : <MainContent />}
+      {showCalculator ? <CalculatorPage lang={lang} /> : <MainContent t={t} feedbackKey={feedbackKey} />}
       <Footer t={t} onShowPrivacy={() => setShowPrivacy(true)} setShowCalculator={setShowCalculator} />
     </div>
   );
