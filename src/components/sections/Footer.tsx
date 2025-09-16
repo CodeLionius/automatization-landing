@@ -5,7 +5,7 @@ interface SectionProps {
 }
 
 // Footer sekcija
-const Footer: React.FC<SectionProps & { onShowPrivacy: () => void; setShowCalculator: (show: boolean) => void; }> = React.memo(({ t, onShowPrivacy, setShowCalculator }) => (
+const Footer: React.FC<SectionProps & { onShowPrivacy: () => void; }> = React.memo(({ t, onShowPrivacy }) => (
   <footer className="bg-gray-800 text-white py-10">
     <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
       <div>
@@ -23,9 +23,9 @@ const Footer: React.FC<SectionProps & { onShowPrivacy: () => void; setShowCalcul
       </div>
       <div id="footer-contact">
         <h4 className="text-lg font-semibold mb-4 text-blue-300">{t.contact}</h4>
-        <p className="text-gray-400">{t.address}</p>
-        <p className="text-gray-400">{t.email}</p>
-        <p className="text-gray-400">{t.phone}</p>
+        <p className="text-gray-400 text-sm">
+          {t.siteName} - Your AI automation partner
+        </p>
       </div>
     </div>
     <div className="text-center text-gray-500 text-sm mt-8">

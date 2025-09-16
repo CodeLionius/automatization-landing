@@ -10,8 +10,7 @@ const FeaturesSection = React.lazy(() => import('./components/sections/FeaturesS
 const CTASection = React.lazy(() => import('./components/sections/CTASection'));
 const Footer = React.lazy(() => import('./components/sections/Footer'));
 const PrivacyPolicyPage = React.lazy(() => import('./components/sections/PrivacyPolicyPage'));
-const CalculatorPage = React.lazy(() => import('./components/sections/CalculatorPage'));
-import { usePageNavigation } from './hooks/usePageNavigation';
+// const CalculatorPage = React.lazy(() => import('./components/sections/CalculatorPage'));
 import { navLinks } from './constants/navigation';
 
 // Loading component for Suspense fallbacks
@@ -57,26 +56,18 @@ const MainContent = ({ t, feedbackKey }: { t: Translation, feedbackKey: number }
 
 // Pagrindinis komponentas
 const AIServiceLandingPage = () => {
-  const {
-    activeSection,
-    showPrivacy,
-    showCalculator,
-    handleNavigation,
-    handleShowPrivacy,
-    handleShowCalculator,
-    setShowPrivacy,
-    setActiveSection,
-  } = usePageNavigation(window.location.hash || "#home");
+  const [activeSection, setActiveSection] = useState(window.location.hash || "#home");
+  const [showPrivacy, setShowPrivacy] = useState(false);
   const [lang, setLang] = useState<Lang>('en');
-  const [isMenuOpen, setIsMenuOpen] = useState(false); // New state for mobile menu
-  const [feedbackKey, setFeedbackKey] = useState(0); // Pridėta: key iframe'ui
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [feedbackKey, setFeedbackKey] = useState(0);
   const t = useMemo(() => translations[lang], [lang]);
 
   useEffect(() => {
     const onHashChange = () => setActiveSection(window.location.hash || "#home");
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
-  }, [setActiveSection]);
+  }, []);
 
   useEffect(() => {
     const scriptId = "tally-embed-script";
@@ -122,7 +113,7 @@ const AIServiceLandingPage = () => {
 
   // New useEffect to re-initialize Tally form when returning to main content
   useEffect(() => {
-    if (!showPrivacy && !showCalculator) {
+    if (!showPrivacy) {
       // Ensure Tally is loaded and then re-initialize embeds
       if (window.Tally && typeof window.Tally.loadEmbeds === 'function') {
         const timer = setTimeout(() => {
@@ -133,27 +124,25 @@ const AIServiceLandingPage = () => {
         return () => clearTimeout(timer);
       }
     }
-  }, [showPrivacy, showCalculator, feedbackKey]);
+  }, [showPrivacy, feedbackKey]);
 
-  const handleLangChange = useCallback((lng: Lang) => setLang(lng), []);
+  const handleLangChange = (lng: Lang) => setLang(lng);
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
-
-  // Pridėta: funkcija atnaujinti feedbackKey
   const refreshFeedback = () => setFeedbackKey(Date.now());
 
-  const handleNavLinkClick = useCallback((sectionId: string, closeMenu: boolean = false) => {
-    handleNavigation(sectionId);
+  const handleNavLinkClick = (sectionId: string, closeMenu: boolean = false) => {
+    setShowPrivacy(false);
+    setActiveSection(sectionId);
+    window.location.hash = sectionId;
     refreshFeedback();
     if (closeMenu) {
-      toggleMenu();
+      setIsMenuOpen(false);
     }
-  }, [handleNavigation, refreshFeedback, toggleMenu]);
+  };
 
-  const handleCalculatorClick = useCallback(() => {
-    handleShowCalculator();
-    refreshFeedback();
-    setIsMenuOpen(false); // Close menu on mobile
-  }, [handleShowCalculator, refreshFeedback]);
+  const handleShowPrivacy = () => {
+    setShowPrivacy(true);
+  };
 
   if (showPrivacy) {
     return (
@@ -169,13 +158,13 @@ const AIServiceLandingPage = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white shadow-sm py-4">
         <div className="container mx-auto px-4 flex justify-between items-center">
-          <div className="text-2xl font-bold text-blue-600"><a href="#" onClick={() => handleNavLinkClick("#home")}>{t.siteName}</a></div>
+          <div className="text-2xl font-bold text-blue-600"><a href="#" onClick={(e) => { e.preventDefault(); handleNavLinkClick("#home"); }}>{t.siteName}</a></div>
           <nav className="hidden md:flex space-x-6">
             {navLinks.map(link => (
               <a
                 key={link.id}
                 href={link.id}
-                onClick={() => handleNavLinkClick(link.id)}
+                onClick={(e) => { e.preventDefault(); handleNavLinkClick(link.id); }}
                 className={clsx(
                   "text-gray-600 hover:text-blue-600 transition duration-300",
                   { "text-blue-700 font-bold underline": activeSection === link.id }
@@ -184,7 +173,6 @@ const AIServiceLandingPage = () => {
                 {t.nav[link.label as keyof typeof t.nav]}
               </a>
             ))}
-            <a href="#" onClick={handleCalculatorClick} className="text-gray-600 hover:text-blue-600 transition duration-300">{t.nav.calculator}</a>
           </nav>
           <div className="flex items-center space-x-2 ml-4">
             <button className={clsx("px-2 py-1 rounded", { 'bg-blue-600 text-white font-bold': lang === 'en', 'bg-gray-200 text-gray-700': lang !== 'en' })} onClick={() => handleLangChange('en')} aria-label="Switch to English">EN</button>
@@ -205,26 +193,19 @@ const AIServiceLandingPage = () => {
                 <a
                   key={link.id}
                   href={link.id}
-                  onClick={() => handleNavLinkClick(link.id, true)}
+                  onClick={(e) => { e.preventDefault(); handleNavLinkClick(link.id, true); }}
                   className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50"
                 >
                   {t.nav[link.label as keyof typeof t.nav]}
                 </a>
               ))}
-              <a href="#" onClick={handleCalculatorClick} className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-50">{t.nav.calculator}</a>
             </nav>
           </div>
         )}
       </header>
-      {showCalculator ? (
-        <React.Suspense fallback={<LoadingSpinner />}>
-          <CalculatorPage lang={lang} />
-        </React.Suspense>
-      ) : (
-        <MainContent t={t} feedbackKey={feedbackKey} />
-      )}
+      <MainContent t={t} feedbackKey={feedbackKey} />
       <React.Suspense fallback={<LoadingSpinner />}>
-        <Footer t={t} onShowPrivacy={handleShowPrivacy} setShowCalculator={handleShowCalculator} />
+        <Footer t={t} onShowPrivacy={handleShowPrivacy} />
       </React.Suspense>
     </div>
   );
