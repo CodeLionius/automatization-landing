@@ -3,7 +3,28 @@
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' https://tally.so https://cal.com; script-src 'self' 'unsafe-inline' https://tally.so; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https:; frame-src https://tally.so https://cal.com;">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    
+    <!-- Performance and SEO optimizations -->
+    <meta name="theme-color" content="#0056b3">
+    <meta name="description" content="Streamline operations, boost efficiency, and drive growth with intelligent AI solutions tailored for your needs.">
+    <meta name="keywords" content="AI automation, artificial intelligence, business automation, efficiency, productivity">
+    <meta name="author" content="AIAutomate">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
+    
+    <!-- Performance hints -->
+    <link rel="preconnect" href="https://tally.so" crossorigin>
+    <link rel="preconnect" href="https://cal.com" crossorigin>
+    <link rel="dns-prefetch" href="https://tally.so">
+    <link rel="dns-prefetch" href="https://cal.com">
+    
+    <title>AIAutomate - AI Automation Solutions</title>
   </head>
   <body>
     <div id="root"></div>

@@ -262,18 +262,54 @@ document.addEventListener('DOMContentLoaded', () => {
         const valueEl = document.getElementById(`${id}-value`);
         const f = factors[id];
         const textIndex = Math.min(f.text.length - 1, Math.floor(value / 10 * (f.text.length - 1)));
-        valueEl.innerHTML = `${value} <span class=\"current-value-text\">${f.text[textIndex]}</span>`;
+        // Secure: Use textContent to prevent XSS
+        valueEl.textContent = '';
+        const valueSpan = document.createElement('span');
+        valueSpan.textContent = value;
+        const textSpan = document.createElement('span');
+        textSpan.className = 'current-value-text';
+        textSpan.textContent = ' ' + f.text[textIndex];
+        valueEl.appendChild(valueSpan);
+        valueEl.appendChild(textSpan);
+    }
+
+    // Input sanitization function
+    function sanitizeInput(input) {
+        if (typeof input !== 'string') return '';
+        return input.replace(/[<>"'&]/g, function(match) {
+            const entities = { '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#x27;', '&': '&amp;' };
+            return entities[match];
+        }).trim().substring(0, 200); // Limit length
     }
 
     form.addEventListener('submit', (e) => {
         e.preventDefault();
-        if (!document.getElementById('taskDescription').value.trim()) {
-            document.getElementById('taskDescriptionError').style.display = 'block'; return;
+        const taskDescription = document.getElementById('taskDescription').value.trim();
+        
+        if (!taskDescription) {
+            document.getElementById('taskDescriptionError').style.display = 'block';
+            return;
         }
+        
+        // Validate task description length
+        if (taskDescription.length > 200) {
+            document.getElementById('taskDescriptionError').textContent = 'Task description must be 200 characters or less.';
+            document.getElementById('taskDescriptionError').style.display = 'block';
+            return;
+        }
+        
         document.getElementById('taskDescriptionError').style.display = 'none';
 
         const values = {};
-        Object.keys(factors).forEach(key => values[key] = parseInt(document.getElementById(key).value));
+        Object.keys(factors).forEach(key => {
+            const value = parseInt(document.getElementById(key).value);
+            // Validate range inputs
+            if (isNaN(value) || value < 1 || value > 10) {
+                values[key] = 5; // Default to middle value if invalid
+            } else {
+                values[key] = value;
+            }
+        });
 
         const results = {
             priorityScore: calculate.priorityScore(values),
@@ -283,7 +319,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
         
         displayResults(results, values);
-        saveToHistory({ ...values, description: document.getElementById('taskDescription').value, ...results });
+        saveToHistory({ ...values, description: sanitizeInput(taskDescription), ...results });
     });
 
     form.addEventListener('input', (e) => {

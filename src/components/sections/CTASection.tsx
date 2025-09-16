@@ -1,7 +1,8 @@
 import React from 'react';
+import { Translation } from '../../locales/translations';
 
 interface SectionProps {
-  t: any; // Pakeisti į tikrą Translation tipą, kai bus perkeltas translations objektas
+  t: Translation;
 }
 
 // CTA sekcija

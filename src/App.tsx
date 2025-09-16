@@ -4,25 +4,34 @@ import 'react-toastify/dist/ReactToastify.css';
 import clsx from 'clsx';
 
 import { translations, Lang, Translation } from './locales/translations';
-import HeroSection from './components/sections/HeroSection';
-import FeaturesSection from './components/sections/FeaturesSection';
-import CTASection from './components/sections/CTASection';
-import Footer from './components/sections/Footer';
-import PrivacyPolicyPage from './components/sections/PrivacyPolicyPage';
-import CalculatorPage from './components/sections/CalculatorPage';
+// Lazy load components for better performance
+const HeroSection = React.lazy(() => import('./components/sections/HeroSection'));
+const FeaturesSection = React.lazy(() => import('./components/sections/FeaturesSection'));
+const CTASection = React.lazy(() => import('./components/sections/CTASection'));
+const Footer = React.lazy(() => import('./components/sections/Footer'));
+const PrivacyPolicyPage = React.lazy(() => import('./components/sections/PrivacyPolicyPage'));
+const CalculatorPage = React.lazy(() => import('./components/sections/CalculatorPage'));
+import { usePageNavigation } from './hooks/usePageNavigation';
+import { navLinks } from './constants/navigation';
 
-const navLinks = [
-  { id: "#home", label: "home" },
-  { id: "#features", label: "features" },
-  { id: "#feedback", label: "contactUsHeader" },
-  { id: "#footer-contact", label: "contact" },
-];
+// Loading component for Suspense fallbacks
+const LoadingSpinner = () => (
+  <div className="flex items-center justify-center min-h-[200px]">
+    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+  </div>
+);
 
 const MainContent = ({ t, feedbackKey }: { t: Translation, feedbackKey: number }) => (
   <>
-    <HeroSection t={t} />
-    <FeaturesSection t={t} />
-    <CTASection t={t} />
+    <React.Suspense fallback={<LoadingSpinner />}>
+      <HeroSection t={t} />
+    </React.Suspense>
+    <React.Suspense fallback={<LoadingSpinner />}>
+      <FeaturesSection t={t} />
+    </React.Suspense>
+    <React.Suspense fallback={<LoadingSpinner />}>
+      <CTASection t={t} />
+    </React.Suspense>
     <section id="feedback" className="py-20 bg-gray-50">
       <div className="container mx-auto px-4 max-w-3xl">
         <h2 className="text-3xl sm:text-4xl font-bold text-center mb-12 text-gray-800">{t.feedbackTitle}</h2>
@@ -37,6 +46,8 @@ const MainContent = ({ t, feedbackKey }: { t: Translation, feedbackKey: number }
             marginHeight={0}
             marginWidth={0}
             title="Contact form"
+            sandbox="allow-scripts allow-forms allow-same-origin"
+            referrerPolicy="strict-origin-when-cross-origin"
           ></iframe>
         </div>
       </div>
@@ -46,11 +57,18 @@ const MainContent = ({ t, feedbackKey }: { t: Translation, feedbackKey: number }
 
 // Pagrindinis komponentas
 const AIServiceLandingPage = () => {
-  const [activeSection, setActiveSection] = useState(window.location.hash || "#home");
+  const {
+    activeSection,
+    showPrivacy,
+    showCalculator,
+    handleNavigation,
+    handleShowPrivacy,
+    handleShowCalculator,
+    setShowPrivacy,
+    setActiveSection,
+  } = usePageNavigation(window.location.hash || "#home");
   const [lang, setLang] = useState<Lang>('en');
   const [isMenuOpen, setIsMenuOpen] = useState(false); // New state for mobile menu
-  const [showPrivacy, setShowPrivacy] = useState(false); // PRIVACY STATE
-  const [showCalculator, setShowCalculator] = useState(false); // CALCULATOR STATE
   const [feedbackKey, setFeedbackKey] = useState(0); // Pridėta: key iframe'ui
   const t = useMemo(() => translations[lang], [lang]);
 
@@ -58,7 +76,7 @@ const AIServiceLandingPage = () => {
     const onHashChange = () => setActiveSection(window.location.hash || "#home");
     window.addEventListener("hashchange", onHashChange);
     return () => window.removeEventListener("hashchange", onHashChange);
-  }, []);
+  }, [setActiveSection]);
 
   useEffect(() => {
     const scriptId = "tally-embed-script";
@@ -66,16 +84,34 @@ const AIServiceLandingPage = () => {
       const script = document.createElement("script");
       script.id = scriptId;
       script.src = "https://tally.so/widgets/embed.js";
-      script.onload = script.onerror = () => {
+      script.crossOrigin = "anonymous";
+      script.referrerPolicy = "strict-origin-when-cross-origin";
+      
+      script.onload = () => {
         if (window.Tally && typeof window.Tally.loadEmbeds === 'function') {
           window.Tally.loadEmbeds();
         } else {
+          // Fallback: manually set iframe src
           document.querySelectorAll("iframe[data-tally-src]:not([src])").forEach((e) => {
             const iframe = e as HTMLIFrameElement;
-            iframe.src = iframe.dataset.tallySrc!;
+            if (iframe.dataset.tallySrc?.startsWith('https://tally.so/')) {
+              iframe.src = iframe.dataset.tallySrc;
+            }
           });
         }
       };
+      
+      script.onerror = (error) => {
+        console.warn('Failed to load Tally script:', error);
+        // Fallback: manually set iframe src
+        document.querySelectorAll("iframe[data-tally-src]:not([src])").forEach((e) => {
+          const iframe = e as HTMLIFrameElement;
+          if (iframe.dataset.tallySrc?.startsWith('https://tally.so/')) {
+            iframe.src = iframe.dataset.tallySrc;
+          }
+        });
+      };
+      
       document.body.appendChild(script);
     } else {
       if (window.Tally && typeof window.Tally.loadEmbeds === 'function') {
@@ -106,24 +142,25 @@ const AIServiceLandingPage = () => {
   const refreshFeedback = () => setFeedbackKey(Date.now());
 
   const handleNavLinkClick = useCallback((sectionId: string, closeMenu: boolean = false) => {
-    setShowCalculator(false);
-    setShowPrivacy(false); // Ensure privacy policy is hidden
+    handleNavigation(sectionId);
     refreshFeedback();
-    setActiveSection(sectionId);
     if (closeMenu) {
       toggleMenu();
     }
-  }, [refreshFeedback, toggleMenu, setActiveSection]);
+  }, [handleNavigation, refreshFeedback, toggleMenu]);
 
   const handleCalculatorClick = useCallback(() => {
-    setShowCalculator(true);
-    setShowPrivacy(false); // Ensure privacy policy is hidden
+    handleShowCalculator();
     refreshFeedback();
     setIsMenuOpen(false); // Close menu on mobile
-  }, [refreshFeedback]);
+  }, [handleShowCalculator, refreshFeedback]);
 
   if (showPrivacy) {
-    return <PrivacyPolicyPage setShowPrivacy={setShowPrivacy} lang={lang} />;
+    return (
+      <React.Suspense fallback={<LoadingSpinner />}>
+        <PrivacyPolicyPage setShowPrivacy={setShowPrivacy} lang={lang} />
+      </React.Suspense>
+    );
   }
 
   return (
@@ -179,8 +216,16 @@ const AIServiceLandingPage = () => {
           </div>
         )}
       </header>
-      {showCalculator ? <CalculatorPage lang={lang} /> : <MainContent t={t} feedbackKey={feedbackKey} />}
-      <Footer t={t} onShowPrivacy={() => setShowPrivacy(true)} setShowCalculator={setShowCalculator} />
+      {showCalculator ? (
+        <React.Suspense fallback={<LoadingSpinner />}>
+          <CalculatorPage lang={lang} />
+        </React.Suspense>
+      ) : (
+        <MainContent t={t} feedbackKey={feedbackKey} />
+      )}
+      <React.Suspense fallback={<LoadingSpinner />}>
+        <Footer t={t} onShowPrivacy={handleShowPrivacy} setShowCalculator={handleShowCalculator} />
+      </React.Suspense>
     </div>
   );
 };
