@@ -2,8 +2,12 @@ module.exports = {
   ci: {
     collect: {
       startServerCommand: 'npx -y serve -s build -p 3000',
-      url: ['http://localhost:3000'],
+      startServerReadyPattern: 'Serving!',
+      url: ['http://127.0.0.1:3000'],
       numberOfRuns: 3,
+      settings: {
+        chromeFlags: '--no-sandbox --headless --disable-gpu',
+      },
     },
     assert: {
       assertions: {
