@@ -156,6 +156,9 @@ jobs:
       with:
         name: production-build
         path: build/
+        
+    - name: 🔍 Debug - List build files
+      run: ls -R build/
       
     - name: 🏃 Run Lighthouse CI
       uses: treosh/lighthouse-ci-action@v10
