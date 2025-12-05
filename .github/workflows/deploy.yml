@@ -162,19 +162,6 @@ jobs:
       run: |
         echo "🌟 Deploying to production..."
         echo "✅ Production deployment complete!"
-        
-    - name: 📢 Notify deployment success
-      uses: actions/github-script@v6
-      with:
-        script: |
-          github.rest.repos.createDeploymentStatus({
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            deployment_id: context.payload.deployment.id,
-            state: 'success',
-            description: 'Deployment completed successfully',
-            environment_url: 'https://your-production-url.com'
-          });
 
   notify:
     name: 📢 Notify Team
