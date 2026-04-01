@@ -63,7 +63,7 @@
     "test": "react-scripts test",
     "lighthouse": "npx lighthouse http://localhost:3000 --output=html --output-path=./lighthouse-report.html"
   },
-  "main": "/index.tsx",
+  "main": "src/index.tsx",
   "browserslist": [
     ">0.2%",
     "not dead",
