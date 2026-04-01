@@ -10,6 +10,8 @@ env:
   CI: true
   SKIP_PREFLIGHT_CHECK: true
   GENERATE_SOURCEMAP: false
+  # Opt-in to Node.js 24 for all JavaScript actions to resolve deprecation warnings
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   test:
@@ -23,18 +25,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@3922559d819c29d81d003c05e1f7c10c1f6df2cf # v4.3.0
         with:
-          node-version: '18'
+          node-version: '20' # Upgraded to LTS v20
           cache: 'npm'
         
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+        run: npm install --legacy-peer-deps # Use npm install for better resilience in CI if lockfile drifts
       
       - name: Run security audit
-        run: npm audit --audit-level=high || echo "⚠️ Some non-critical vulnerabilities found in dev dependencies"
-        continue-on-error: true
+        run: npm audit --audit-level=high || true
       
       - name: Run tests
-        run: npm test -- --watchAll=false --passWithNoTests --coverage || echo "⚠️ Some tests have warnings but app is functional"
+        # Ensured that failure here actually fails the CI to know when it happens
+        run: npm test -- --watchAll=false --passWithNoTests --coverage
       
       - name: TypeScript check
         run: npx tsc --noEmit
@@ -44,7 +46,7 @@ jobs:
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
-        if: success()
+        if: always() # Upload reports even if tests fail (useful for debugging)
 
   build:
     name: Build Application
@@ -58,11 +60,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@3922559d819c29d81d003c05e1f7c10c1f6df2cf # v4.3.0
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
         
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps || npm install --legacy-peer-deps
+        run: npm install --legacy-peer-deps
       
       - name: Build for production
         run: npm run build
