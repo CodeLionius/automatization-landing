@@ -943,7 +943,7 @@
             const helpItems = document.querySelectorAll('#help-modal li');
             helpItems.forEach(item => {
                 if (item.textContent.includes('(EUR)')) {
-                    item.innerHTML = item.innerHTML.replace(/\(EUR\)/g, `(${currencySymbol})`);
+                    item.textContent = item.textContent.replace(/\(EUR\)/g, `(${currencySymbol})`);
                 }
             });
         }

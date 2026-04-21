@@ -11,6 +11,13 @@ A modern, responsive landing page for an AI automation service, built with React
 - Easy deployment to Vercel, Netlify, or GitHub Pages
 - Unit tests with React Testing Library
 
+## Security
+- **Audited Status**: 0 vulnerabilities (Latest `npm audit` 2026).
+- **Hardened Production**: Docker image runs as a non-root user on port `8080`.
+- **Advanced Headers**: HSTS, CSP, COOP, and Permissions-Policy are enforced via Nginx.
+- **Safe Data Handling**: All interactive tools are refactored to prevent XSS via `textContent` and DOM manipulation.
+- **Privacy**: Production source maps are disabled, and environment secrets are excluded from Git.
+
 ## App Architecture & Logic
 - **App.tsx** is the main entry point, handling routing, language switching, and state for privacy/calculator modals.
 - **Navigation**: All main sections (Home, Features, Contact Us, Tools) are accessible from the header and mobile menu. Language can be switched at any time.

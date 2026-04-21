@@ -203,14 +203,36 @@ document.addEventListener('DOMContentLoaded', () => {
     Object.keys(factors).forEach(id => {
         const f = factors[id];
         const group = document.getElementById(`${id}-group`);
-        group.innerHTML = `
-            <label for="${id}">${f.label}</label>
-            <p class="label-range-description">0 (${f.text[0]}) – 10 (${f.text[f.text.length-1]})</p>
-            <input type="range" id="${id}" min="0" max="10" value="5">
-            <div class="slider-labels">
-                <span class="current-value" id="${id}-value"></span>
-            </div>
-        `;
+        
+        while (group.firstChild) group.removeChild(group.firstChild);
+
+        const lbl = document.createElement('label');
+        lbl.setAttribute('for', id);
+        lbl.textContent = f.label;
+        
+        const desc = document.createElement('p');
+        desc.className = 'label-range-description';
+        desc.textContent = `0 (${f.text[0]}) – 10 (${f.text[f.text.length-1]})`;
+        
+        const inp = document.createElement('input');
+        inp.type = 'range';
+        inp.id = id;
+        inp.min = '0';
+        inp.max = '10';
+        inp.value = '5';
+        
+        const labelDiv = document.createElement('div');
+        labelDiv.className = 'slider-labels';
+        
+        const valSpan = document.createElement('span');
+        valSpan.className = 'current-value';
+        valSpan.id = `${id}-value`;
+        
+        labelDiv.appendChild(valSpan);
+        group.appendChild(lbl);
+        group.appendChild(desc);
+        group.appendChild(inp);
+        group.appendChild(labelDiv);
     });
 
     const form = document.getElementById('taskForm');
@@ -263,7 +285,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const valueEl = document.getElementById(`${id}-value`);
         const f = factors[id];
         const textIndex = Math.min(f.text.length - 1, Math.floor(value / 10 * (f.text.length - 1)));
-        valueEl.innerHTML = `${value} <span class="current-value-text">${f.text[textIndex]}</span>`;
+        
+        valueEl.textContent = '';
+        const valueSpan = document.createElement('span');
+        valueSpan.textContent = value;
+        const textSpan = document.createElement('span');
+        textSpan.className = 'current-value-text';
+        textSpan.textContent = ' ' + f.text[textIndex];
+        valueEl.appendChild(valueSpan);
+        valueEl.appendChild(textSpan);
     }
 
     form.addEventListener('submit', (e) => {
@@ -326,19 +356,47 @@ document.addEventListener('DOMContentLoaded', () => {
         const tasks = JSON.parse(localStorage.getItem('automationHistory') || '[]');
         const head = document.querySelector("#historyTable thead");
         const body = document.querySelector("#historyTable tbody");
-        head.innerHTML = `<tr><th>Užduotis</th><th>Prior.</th><th>D</th><th>C</th><th>A</th><th>T</th><th>S</th><th>R</th></tr>`;
-        body.innerHTML = tasks.map(task => `
-            <tr>
-                <td>${task.description || ''}</td>
-                <td><b>${task.priorityScore !== undefined ? task.priorityScore.toFixed(1) : 'N/A'}</b></td>
-                <td>${task.desire !== undefined ? task.desire : 'N/A'}</td>
-                <td>${task.capability !== undefined ? task.capability : 'N/A'}</td>
-                <td>${task.autonomy !== undefined ? task.autonomy : 'N/A'}</td>
-                <td>${task.complexity !== undefined ? task.complexity : 'N/A'}</td>
-                <td>${task.importance !== undefined ? task.importance : 'N/A'}</td>
-                <td>${task.risk !== undefined ? task.risk : 'N/A'}</td>
-            </tr>
-        `).join('');
+        
+        // Clear existing content safely
+        head.textContent = '';
+        body.textContent = '';
+        
+        // Create header row
+        const headerRow = document.createElement('tr');
+        ['Užduotis', 'Prior.', 'D', 'C', 'A', 'T', 'S', 'R'].forEach(text => {
+            const th = document.createElement('th');
+            th.textContent = text;
+            headerRow.appendChild(th);
+        });
+        head.appendChild(headerRow);
+        
+        // Create task rows
+        tasks.forEach(task => {
+            const row = document.createElement('tr');
+            
+            const createCell = (text, isBold = false) => {
+                const td = document.createElement('td');
+                if (isBold) {
+                    const b = document.createElement('b');
+                    b.textContent = text;
+                    td.appendChild(b);
+                } else {
+                    td.textContent = text;
+                }
+                return td;
+            };
+
+            row.appendChild(createCell(task.description || ''));
+            row.appendChild(createCell(task.priorityScore !== undefined ? task.priorityScore.toFixed(1) : 'N/A', true));
+            row.appendChild(createCell(task.desire !== undefined ? task.desire : 'N/A'));
+            row.appendChild(createCell(task.capability !== undefined ? task.capability : 'N/A'));
+            row.appendChild(createCell(task.autonomy !== undefined ? task.autonomy : 'N/A'));
+            row.appendChild(createCell(task.complexity !== undefined ? task.complexity : 'N/A'));
+            row.appendChild(createCell(task.importance !== undefined ? task.importance : 'N/A'));
+            row.appendChild(createCell(task.risk !== undefined ? task.risk : 'N/A'));
+            
+            body.appendChild(row);
+        });
     }
 
     function saveToHistory(taskData) {

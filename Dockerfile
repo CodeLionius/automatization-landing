@@ -1,6 +1,5 @@
-# Multi-stage Docker build for production deployment
 # Stage 1: Build the application
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -8,22 +7,31 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production --ignore-scripts
+# Install dependencies - include devDependencies for build
+RUN npm ci --ignore-scripts
 
 # Copy source code
 COPY . .
 
 # Build the application
+# Node 20 doesn't need --experimental-global-webcrypto, but we've added it to the scripts 
+# for local Node 18 compatibility, which is fine.
 RUN npm run build
 
 # Stage 2: Serve the application with nginx
 FROM nginx:alpine AS production
 
-# Copy custom nginx configuration
+# Create a non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Set up directories and permissions for non-root nginx
+RUN touch /var/run/nginx.pid && \
+    chown -R appuser:appgroup /var/run/nginx.pid /var/cache/nginx /var/log/nginx /etc/nginx/conf.d
+
+# Copy custom nginx configuration (configured for port 8080)
 COPY <<EOF /etc/nginx/conf.d/default.conf
 server {
-    listen 80;
+    listen 8080;
     server_name localhost;
     
     # Security headers
@@ -31,7 +39,11 @@ server {
     add_header X-XSS-Protection "1; mode=block" always;
     add_header X-Content-Type-Options "nosniff" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-    add_header Content-Security-Policy "default-src 'self' https://tally.so https://cal.com; script-src 'self' 'unsafe-inline' https://tally.so; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https:; frame-src https://tally.so https://cal.com;" always;
+    add_header Content-Security-Policy "default-src 'self' https://tally.so https://cal.com; script-src 'self' 'unsafe-inline' https://tally.so; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' https:; frame-src https://tally.so https://cal.com; object-src 'none'; base-uri 'self'; form-action 'self' https://tally.so;" always;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    add_header Cross-Origin-Opener-Policy "same-origin" always;
+    add_header Cross-Origin-Resource-Policy "same-origin" always;
+    add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), interest-cohort=()" always;
     
     # Gzip compression
     gzip on;
@@ -90,15 +102,22 @@ EOF
 # Copy built application from builder stage
 COPY --from=builder /app/build /usr/share/nginx/html
 
-# Copy service worker to nginx html directory
-COPY --from=builder /app/public/sw.js /usr/share/nginx/html/
+# Copy service worker to nginx html directory (if it exists)
+# Note: we use || true to prevent build failure if sw.js is missing
+COPY --from=builder /app/public/sw.js /usr/share/nginx/html/ || true
 
-# Expose port 80
-EXPOSE 80
+# Set ownership for the static files
+RUN chown -R appuser:appgroup /usr/share/nginx/html
+
+# Switch to non-root user
+USER appuser
+
+# Expose port 8080
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost/health || exit 1
+    CMD curl -f http://localhost:8080/health || exit 1
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]

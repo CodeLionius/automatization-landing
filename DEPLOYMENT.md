@@ -60,8 +60,8 @@ npm run deploy
 # Build Docker image
 docker build -t aiautomate-app .
 
-# Run locally
-docker run -p 80:80 aiautomate-app
+# Run locally (Note: uses port 8080 for non-root security)
+docker run -p 8080:8080 aiautomate-app
 
 # Deploy to cloud
 docker tag aiautomate-app your-registry/aiautomate-app
@@ -180,12 +180,15 @@ The repository includes a complete CI/CD pipeline with:
 
 ### **Server Headers** (Already configured in Docker/Nginx)
 ```nginx
-# Security Headers
+# Security Headers (Hardened)
 X-Frame-Options: SAMEORIGIN
 X-XSS-Protection: 1; mode=block
 X-Content-Type-Options: nosniff
 Referrer-Policy: strict-origin-when-cross-origin
-Content-Security-Policy: default-src 'self' https://tally.so https://cal.com;
+Content-Security-Policy: default-src 'self' https://tally.so https://cal.com; object-src 'none'; base-uri 'self';
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+Cross-Origin-Opener-Policy: same-origin
+Permissions-Policy: camera=(), microphone=(), geolocation=()
 
 # Caching
 Cache-Control: public, max-age=31536000 (static assets)
